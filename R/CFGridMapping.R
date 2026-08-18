@@ -650,7 +650,8 @@ CFGridMapping <- R6::R6Class("CFGridMapping",
 
     #' @description Retrieve the CRS string for a specific variable.
     #' @param axis_info A list with information that describes the axes of the
-    #' `CFVariable` instance to describe.
+    #' [CFVariable] instance to describe. This list can be generated for a
+    #' `CFVariable` using the `.wkt2_axis_info()` function (not exported).
     #' @return A character string with the CRS in WKT2 format.
     wkt2 = function(axis_info) {
       crs_attr <- self$attribute("crs_wkt")

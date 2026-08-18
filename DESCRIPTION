@@ -57,6 +57,7 @@ Collate:
     'utils.R'
     'wkt2.R'
     'zzz.R'
+    'aggregate.R'
 Suggests: 
     data.table,
     geozarr,

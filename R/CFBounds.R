@@ -72,7 +72,7 @@ CFBounds <- R6::R6Class("CFBounds",
       cat("Length     :", self$length, "\n")
       self$print_boundary_values()
 
-      if (attributes)
+      if (length(self$attributes))
         self$print_attributes()
     },
 
@@ -109,7 +109,7 @@ CFBounds <- R6::R6Class("CFBounds",
     #' @description Retrieve the lowest and highest value in the bounds.
     range = function() {
       if (is.null(self$values)) NULL
-      else self$attribute("actual_range")
+      else self$attribute("actual_range") # FIXME: May not have been set
     },
 
     #' @description Create a copy of this bounds object The copy is completely
@@ -219,13 +219,16 @@ CFBounds <- R6::R6Class("CFBounds",
     #' @description Write the boundary values to a Zarr group, including its
     #'   attributes, if it does not already exist.
     #' @param grp An instance of `zarr_group` to write the boundary values to.
-    #'   The data will be written to a new Zarr array with the name of this
-    #'   bounds object.
+    #'   The data will be written to a new Zarr array with the name of
+    #'   `<axis_name>_bounds`.
+    #' @param axis_name The name of the axis owning these boundary values.
     #' @return Self, invisibly.
-    write_geozarr = function(grp) {
-      if (is.null(grp$children[[self$name]])) {
+    write_geozarr = function(grp, axis_name) {
+      bnds_name <- paste0(axis_name, "_bounds")
+      if (is.null(grp$children[[bnds_name]])) {
         # Create a Zarr array for the boundary values
         len <- self$length
+        atts <- private$zarr_attributes()
         ab <- zarr::array_builder$new()
         ab$shape <- c(self$vertices, len)
         vals <- self$values
@@ -235,12 +238,15 @@ CFBounds <- R6::R6Class("CFBounds",
         ab$chunk_shape <- c(self$vertices, len)
         if (len * self$vertices > zarr::zarr_options()$min_compress)
           ab$add_codec("blosc", list(clevel = 6L))
-        new_array <- try(grp$add_array(self$name, ab), silent = TRUE)
+        meta <- ab$metadata()
+        if (length(atts))
+          meta$attributes <- atts
+        new_array <- try(grp$add_array(bnds_name, meta), silent = TRUE)
         if (inherits(new_array, "try-error"))
-          stop("Could not create Zarr array with name", self$name, call. = FALSE)
+          stop("Could not create Zarr array with name", bnds_name, call. = FALSE)
         new_array$write(vals)
-
-        self$write_geozarr_attributes(new_array)
+        new_array$dirty <- TRUE
+        new_array$save()
       }
       invisible(self)
     }

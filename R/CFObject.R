@@ -51,6 +51,20 @@ CFObject <- R6::R6Class("CFObject",
       attributes
     },
 
+    # Convert CF attributes in a data.frame into a Zarr named list, possibly
+    # deleting some of the attributes. Returns the list to the caller.
+    zarr_attributes = function(delete) {
+      atts <- self$attributes # data.frame
+      if (!missing(delete))
+        atts <- atts[!atts$name %in% delete, ]
+      atts <- if (is.list(atts$value)) setNames(atts$value, atts$name)
+      else setNames(list(atts$value), atts$name) # named list
+
+      # Convert atomic vectors of length > 1 into nested unnamed list
+      atts <- lapply(atts, function(att)
+        {if (is.atomic(att) && length(att) > 1L) unname(as.list(att)) else att})
+    },
+
     # Make sure we detach before we poof out.
     finalize = function() {
       if (!is.null(private$.NCobj) && inherits(private$.NCobj, "NCVariable"))
@@ -306,27 +320,6 @@ CFObject <- R6::R6Class("CFObject",
           private$.NCobj$write_attributes(nm, private$.attributes)
           private$.attributes_dirty <- FALSE
         }
-      invisible(self)
-    },
-
-    #' @description Write the attributes of this object to a GeoZarr file.
-    #' @param node The `zarr_node` instance (either a Zarr group or a Zarr
-    #'   array) to write the attributes to.
-    #' @param atts Optional. List of attributes to write. Defaults to `NULL`, in
-    #'   which case all attributes from this object are written. This argument
-    #'   is useful to filter or modify attributes before writing them to a Zarr
-    #'   file.
-    #' @return Self, invisibly.
-    write_geozarr_attributes = function(node, atts = NULL) {
-      if (is.null(atts))
-        atts <- private$.attributes
-      values <- atts$value
-      names(values) <- atts$name
-      if (length(atts)) {
-        for (i in seq_along(atts$name))
-          node$set_attribute(atts$name[i], values[[i]])
-        node$save()
-      }
       invisible(self)
     }
   ),

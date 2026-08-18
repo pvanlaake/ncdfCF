@@ -324,28 +324,33 @@ CFDataset <- R6::R6Class("CFDataset",
     #'   Y coordinates, no support for time or vertical coordinates, 3 axes at
     #'   most) most Zarr arrays will use the `cs` convention. Supporting
     #'   conventions, like `proj` or `ref`, will be used as needed.
-    #' @param zarr Fully-qualified file name or URI indicating where to save the
-    #'   data set to, or a `zarr` object. If a file name or URI, it must point
-    #'   to an existing Zarr store where the data from this dat aset will be
-    #'   appended, or a new Zarr store will be created by that name and then it
-    #'   can not already exist. By convention, a new Zarr store should have a
-    #'   ".zarr" file name extension.
+    #' @param zarr Optional. Fully-qualified file name or URI indicating where
+    #'   to save the data set to, or a `zarr` object. If a file name or URI, it
+    #'   must point to an existing Zarr store where the data from this dat aset
+    #'   will be appended, or a new Zarr store will be created by that name and
+    #'   then it can not already exist. By convention, a new Zarr store should
+    #'   have a ".zarr" file name extension. If missing, create a Zarr store in
+    #'   memory.
     #' @param dataset_root Optional. Path to a node in the Zarr store where this
     #'   data set will be anchored. If the node does not yet exist, it will be
     #'   created. A path must start from the root node of the Zarr store and be
     #'   specified like "/subgroup/sub/here" with the root of this data set
     #'   starting at the indicated path. Defaults to the root of the Zarr store,
     #'   "/". Alternatively, this may be a `zarr_group` to be used as the root
-    #'   for this data set, but only if argument `zarr` is a `zarr` object.
+    #'   for this data set, but only if argument `zarr` is a `zarr` object. If
+    #'   the `zarr` argument is not provided, this argument will be ignored.
     #' @return The `zarr` object to which the data set was written.
     geozarr = function(zarr, dataset_root = "/") {
       if (!requireNamespace("geozarr", quietly = TRUE))
         stop("Package 'geozarr' must be installed for this functionality", call. = FALSE)
 
       # Get the `zarr` object, possibly in a new Zarr store
-      if (inherits(zarr, "zarr"))
+      if (missing(zarr)) {
+        z <- zarr::create_zarr()
+        dataset_root <- "/"
+      } else if (inherits(zarr, "zarr")) {
         z <- zarr
-      else {
+      } else {
         # zarr argument is a name. Open it or create it.
         z <- try(zarr::create_zarr(zarr), silent = TRUE)
         if (inherits(z, "try-error")) {

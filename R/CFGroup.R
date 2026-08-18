@@ -424,8 +424,13 @@ CFGroup <- R6::R6Class("CFGroup",
     #' @param grp The `zarr_group` instance to write to.
     #' @return Self, invisibly.
     write_geozarr = function(grp) {
-      # Write attributes
-      self$write_geozarr_attributes(grp)
+      # Attributes
+      atts <- private$zarr_attributes()
+      meta <- grp$metadata
+      meta$attributes <- atts
+      grp$dirty <- TRUE
+      grp$metadata <- meta
+      grp$save()
 
       # Write the data variables in the group - this will also write axes,
       # auxiliary coordinates and bounds

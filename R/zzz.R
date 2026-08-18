@@ -9,7 +9,7 @@ CF.options <- new.env(parent = emptyenv())
                       "cell_measure", "ancillary_data", "mesh_topology",
                       "location_index_set", "quantization",
                       "geometry_container"), envir = CF)
-  assign("eps", .Machine$double.eps^0.5, envir = CF)
+  assign("eps", 1e-05, envir = CF)
   assign("standard_names", CFStandardNames$new(), envir = CF)
 
   # The below variables are used to generate unique id's for CF objects.

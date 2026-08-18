@@ -1248,22 +1248,39 @@ CFVariable <- R6::R6Class("CFVariable",
       # Create Zarr array metadata for the data variable
       ab <- zarr::array_builder$new()
       vals <- self$values
-      ab$shape <- rev(dim(vals)) %||% length(vals)
+      ab$shape <- dim(vals) %||% length(vals)
       ab$data_type <- switch(storage.mode(vals),
                              "double" = "float64",
                              "integer" = "int32",
                              "character" = "string")
+      shp <- ab$shape
+      names(shp) <- names(private$.axes)
+      ab$chunk_shape <- zarr::optimal_chunking(shp)
       if (prod(ab$shape) > zarr::zarr_options()$min_compress)
         ab$add_codec("blosc", list(clevel = 6L))
+      meta <- ab$metadata()
+
+      # CRS
+      crs <- private$.crs
+      if (!is.null(crs))
+        crs <- crs$wkt2(.wkt2_axis_info(self))
 
       # Compile the coordinate system from the axes
       axes <- lapply(private$.axes, function(ax) { ax$geozarr_axis(grp) })
-      cs <- geozarr::CoordinateSystem$new("coordinate_system", axes)
+      cs <- geozarr::CoordinateSystem$new("coordinate_system", axes, crs)
+
+      # Attributes that are structural are written inline with the Zarr array
+      # so filter them out before writing. Leave a few that are descriptive of
+      # the data, such as units.
+      atts <- private$zarr_attributes(c("coords", "grid_mapping"))
+      meta$attributes <- atts
 
       # Build the full array metadata, including convention attributes
-      meta <- .geozarr_set_convention(ab$metadata(), cs, '..')
-      meta$chunk_key_encoding <- list(name = 'default',
-                                      configuration = list(separator = '.'))
+      if (is.character(crs))
+        crs <- list(compound = list(wkt2 = crs))
+      meta$chunk_key_encoding <- list(name = "default",
+                                      configuration = list(separator = "."))
+      meta <- geozarr::set_convention(meta, cs, crs = crs, external_group = "..")
 
       # Add any auxiliary variables
       # lapply(private$.aux, function(x) {x$write_geozarr(grp)})
@@ -1271,14 +1288,9 @@ CFVariable <- R6::R6Class("CFVariable",
       # Create the GeoZarr array and add it to the Zarr group
       new_array <- geozarr::geozarr_array$new(self$name, meta, grp, grp$store, cs)
       new_array$write(vals)
+      new_array$dirty <- TRUE
+      new_array$save()
       grp$set_node(new_array)
-
-      # Attributes that are structural are written inline with the Zarr array
-      # so filter them out before writing. Leave a few that are descriptive of
-      # the data, such as units.
-      atts <- self$attributes
-      atts <- atts[!atts$name %in% c("coords"), ]
-      self$write_geozarr_attributes(new_array, atts)
 
       invisible(self)
     },

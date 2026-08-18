@@ -403,14 +403,25 @@ CFAxisTime <- R6::R6Class("CFAxisTime",
     #'   located in the Zarr store. The coordinates will be written to a new
     #'   Zarr array with the name based on the axis name if it is irregular and
     #'   long.
-    #' @return An instance of [geozarr::Coordinates] or a descendant class.
+    #' @return An instance of [geozarr::CoordinatesTime].
     geozarr_coordinates = function(grp) {
       len <- self$length
-      vals <- self$values
+      vals <- self$time$offsets
       dir <- if (len == 1L) "OTHER" else "FUTURE"
 
-      unit <- strsplit(self$attribute("units"), " ", fixed = TRUE)[[1L]]
-      epoch <- unit[3L]
+      unit <- private$.tm$unit
+      cal <- private$.tm$calendar
+      calendar <- cal$name
+      epoch <- cal$origin_date
+      epoch_time <- cal$origin_time
+      if (epoch_time != "00:00:00")
+        epoch <- paste(epoch, epoch_time, sep = "T")
+
+      # Attributes that are structural are by the convention being used
+      # so filter them out before writing. Add the reworked attributes.
+      atts <- private$zarr_attributes(c("axis", "bounds", "climatology_bounds"))
+      atts$units <- unit
+      atts$epoch <- epoch
 
       # Boundary values
       bnds <- private$.bounds$values
@@ -423,12 +434,8 @@ CFAxisTime <- R6::R6Class("CFAxisTime",
           private$.bounds$write_geozarr(grp)
       }
 
-      # Regular coordinate values
-      if (private$.regular)
-        return(geozarr::CoordinatesPacked$new(self$name, dir, unit[1L], vals, len, bnds))
-
       # Irregular
-      if (self$length > geozarr::geozarr_options()$max_explicit) {
+      if (!private$.regular && self$length > geozarr::geozarr_options()$max_explicit) {
         # Create a Zarr array for the axis coordinates if it does not already exist
         if (is.null(grp$children[[self$name]])) {
           ab <- zarr::array_builder$new()
@@ -439,25 +446,21 @@ CFAxisTime <- R6::R6Class("CFAxisTime",
           ab$chunk_shape <- len
           if (len > zarr::zarr_options()$min_compress)
             ab$add_codec("blosc", list(clevel = 6L))
-          new_array <- try(grp$add_array(self$name, ab), silent = TRUE)
+          meta <- ab$metadata()
+          meta$attributes <- atts
+          new_array <- try(grp$add_array(self$name, meta), silent = TRUE)
           if (inherits(new_array, "try-error"))
             stop("Could not create Zarr array with name", self$name, call. = FALSE)
           new_array$write(vals)
-
-          # Attributes that are structural are written inline with the Zarr array
-          # so filter them out before writing. Leave a few that are descriptive of
-          # the data, such as units and calendar
-          atts <- self$attributes
-          atts <- atts[!atts$name %in% c("axis", "bounds", "climatology_bounds"), ]
-          idx <- which(atts$name == "units")
-          if (length(idx))
-            atts$value[[idx]] <- unit[1L]
-          atts <- rbind(atts, list(name = "epoch", type = "NC_STRING", length = 1L, value = epoch))
-          self$write_geozarr_attributes(new_array, atts)
         }
       }
 
-      geozarr::Coordinates$new(self$name, dir, unit[1L], vals, bnds)
+      # Filter some more attributes that we don't want inlined
+      atts$units <- NULL
+      atts$calendar <- NULL
+      atts$epoch <- NULL
+
+      geozarr::CoordinatesTime$new(self$name, dir, unit, epoch, calendar, vals, bnds, atts)
     }
   ),
   active = list(

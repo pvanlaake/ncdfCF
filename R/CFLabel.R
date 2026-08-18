@@ -157,6 +157,7 @@ CFLabel <- R6::R6Class("CFLabel",
     geozarr_coordinates = function(grp) {
       len <- self$length
       vals <- self$values
+      atts <- private$zarr_attributes()
 
       # Labels are always irregular
       if (self$length > geozarr_options()$max_explicit) {
@@ -168,15 +169,18 @@ CFLabel <- R6::R6Class("CFLabel",
           ab$chunk_shape <- len
           if (len > zarr::zarr_options()$min_compress)
             ab$add_codec("blosc", list(clevel = 6L))
-          new_array <- try(grp$add_array(self$name, ab), silent = TRUE)
+          meta <- ab$metadata()
+          meta$attributes <- atts
+          new_array <- try(grp$add_array(self$name, meta), silent = TRUE)
           if (inherits(new_array, "try-error"))
             stop("Could not create Zarr array with name", self$name, call. = FALSE)
           new_array$write(vals)
-          self$write_geozarr_attributes(new_array)
+          new_array$dirty <- TRUE
+          new_array$save()
         }
       }
 
-      geozarr::CoordinatesString$new(self$name, "OTHER", "1", vals)
+      geozarr::CoordinatesString$new(self$name, "OTHER", "1", vals, atts)
     }
   ),
   active = list(

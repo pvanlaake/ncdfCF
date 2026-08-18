@@ -108,7 +108,7 @@ CFAxis <- R6::R6Class("CFAxis",
     initialize = function(var, group, values, start = 1L, count = NA, orientation = "", attributes = data.frame()) {
       orientation <- orientation[1L]
       if (!(orientation %in% c("X", "Y", "Z", "T", "")))
-        stop("Invalid orientation for the axis.", call. = FALSE) # nocov
+        stop("Invalid orientation for the axis", call. = FALSE) # nocov
 
       # Scalar axes don't have .NC_map, so catch NULL values from $copy() etc
       if (is.null(start)) start <- 1L
@@ -421,7 +421,7 @@ CFAxis <- R6::R6Class("CFAxis",
     #'   name of the axis if it is irregular and long.
     #' @return An instance of [geozarr::CoordinateSystemAxis].
     geozarr_axis = function(grp) {
-      # vertical?, discrete?
+      # parametric vertical, discrete?
       all_crds <- lapply(c(self, private$.aux), function(crd) {
         crd$geozarr_coordinates(grp)
       })
@@ -465,9 +465,15 @@ CFAxis <- R6::R6Class("CFAxis",
           private$.bounds$write_geozarr(grp)
       }
 
+      # Attributes that are structural are managed by the convention used so
+      # filter them out before writing. Leave others that are descriptive of the
+      # data.
+      atts <- private$zarr_attributes(c("axis", "bounds", "units", "actual_range"))
+
       # Regular coordinate values
       if (private$.regular)
-        return(geozarr::CoordinatesPacked$new(self$name, dir, unit, vals, len, bnds))
+        return(geozarr::CoordinatesPacked$new(self$name, dir, unit,
+                                              c(vals[1L], vals[2L] - vals[1L]), len, bnds, atts))
 
       # Irregular
       if (self$length > geozarr::geozarr_options()$max_explicit) {
@@ -482,24 +488,18 @@ CFAxis <- R6::R6Class("CFAxis",
           ab$chunk_shape <- len
           if (len > zarr::zarr_options()$min_compress)
             ab$add_codec("blosc", list(clevel = 6L))
-          new_array <- try(grp$add_array(self$name, ab), silent = TRUE)
+          meta <- ab$metadata()
+          meta$attributes <- atts
+          new_array <- try(grp$add_array(self$name, meta), silent = TRUE)
           if (inherits(new_array, "try-error"))
             stop("Could not create Zarr array with name", self$name, call. = FALSE)
           new_array$write(vals)
-
-          # Attributes that are structural are written inline with the Zarr array
-          # so filter them out before writing. Leave a few that are descriptive of
-          # the data, such as units and calendar
-          atts <- self$attributes
-          atts <- atts[!atts$name %in% c("axis", "bounds"), ]
-          idx <- which(atts$name == "units")
-          if (length(idx))
-            atts$value[[idx]] <- unit
-          self$write_geozarr_attributes(new_array, atts)
+          new_array$dirty <- TRUE
+          new_array$save()
         }
       }
 
-      geozarr::Coordinates$new(self$name, dir, unit, vals, bnds)
+      geozarr::Coordinates$new(self$name, dir, unit, vals, bnds, atts)
     }
   ),
   active = list(

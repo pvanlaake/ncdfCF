@@ -202,109 +202,11 @@ netcdf_data_types <- c("NC_BYTE", "NC_UBYTE", "NC_CHAR", "NC_SHORT",
 #' Test if vector `x` is regular, meaning the difference between successive
 #' values is constant, possibly 0.
 #' @noRd
-.is_regular <- function(x) {
+.is_regular <- function(x, tolerance = CF$eps) {
+  if (length(x) == 1L) return(FALSE)
   d <- diff(x)
-  isTRUE(all.equal(d, rep(d[1L], length(d)), tolerance = CF$eps))
+  isTRUE(all.equal(d, rep(d[1L], length(d)), tolerance))
 }
-
-# This function will take the valid metadata for a Zarr array, the
-# [CoordinateSystem] instance of a new `geozarr` array to create, optionally the
-# path relative to the location of the new `geo_zarr` array for the group that
-# stores any external arrays with coordinate values. The function will then set
-# the proper convention attributes based on the coordinate system and return the
-# updated metadata.
-.geozarr_set_convention <- function(metadata, coord_sys, external_group, registration = 'pixel') {
-  # This function is taken from the geozarr package because it is not exported from there
-  meta <- metadata
-  atts <- meta$attributes %||% list()
-  axes <- coord_sys$axes
-
-  # Drop any existing information
-  meta$dimension_names <- NULL
-  atts$zarr_conventions <- NULL
-  if (length(atts)) {
-    atts <- atts[!startsWith(names(atts), c('spatial:', 'proj:'))] # Drop any old spatial and proj elements
-    atts$cs <- NULL # Remove any previous cs information
-  }
-
-  # dimension_names
-  meta <- append(meta, list(dimension_names = vapply(axes, function(ax) ax$name, character(1L), USE.NAMES = FALSE)))
-
-  # Axis abbreviation
-  ax_abbr <- vapply(axes, function(ax) ax$abbreviation, FUN.VALUE = character(1), USE.NAMES = FALSE)
-  X_axis <- which(ax_abbr == 'X')
-  Y_axis <- which(ax_abbr == 'Y')
-  if (!length(X_axis) && !length(Y_axis))
-    stop('Cannot convert to GeoZarr: No X and/or Y axes found', call. = FALSE)
-
-  # Set GeoZarr convention attributes
-  if (length(X_axis) && length(Y_axis) && length(ax_abbr) <= 3L &&
-      !('Z' %in% ax_abbr) && !('T' %in% ax_abbr) &&
-      inherits(axes[[X_axis]]$coordinates$values, 'CoordinateValuesNumericPacked') && # == numeric & regular
-      inherits(axes[[Y_axis]]$coordinates$values, 'CoordinateValuesNumericPacked') &&
-      axes[[Y_axis]]$coordinates$values$raw[2L] < 0) {                                # == Y values descending
-    # spatial convention
-    # X + Y, optionally a band, no others, and X + Y coordinates are numeric and regular
-    spatial <- geozarr::zarr_conv_spatial$new()
-    atts <- spatial$register(atts)
-
-    dimensions <- c(axes[[Y_axis]]$name, axes[[X_axis]]$name)
-    spatial$dimensions <- dimensions
-    spatial$set_coordinates(shape = c(axes[[X_axis]]$length, axes[[Y_axis]]$length),
-                            x = axes[[X_axis]]$coordinates$values$raw,
-                            y = axes[[Y_axis]]$coordinates$values$raw,
-                            registration = registration)
-
-    atts <- c(atts, spatial$as_list())
-  } else {
-    # cs convention
-    cs_conv <- geozarr::zarr_convention_cs$new()
-    atts    <- cs_conv$register(atts)
-
-    # Direction lookup by axis abbreviation
-    cs_direction <- c(X = 'EAST', Y = 'NORTH', Z = 'UP', T = 'FUTURE', OTHER = 'OTHER')
-
-    axis_defs <- lapply(axes, function(ax) {
-      # Values
-      values <- ax$coordinates$raw
-      values_def <- if (inherits(ax$coordinates, 'CoordinatesPacked'))
-        cs_conv$values_regular(values[1L], values[2L])
-      else if (ax$length <= geozarr::geozarr_options()$max_explicit)
-        cs_conv$values_explicit(values)
-      else
-        # External coordinate values: Write coordinate values to an external array.
-        # The name of the external array is `<axis_name>_coord`. The actual writing
-        # to the external array should be done in the calling code.
-        cs_conv$values_external(paste0(external_group, '/', paste0(ax$name, '_coord')))
-
-      # Time
-      time_def <- if (inherits(ax$coordinates, 'CoordinatesTime')) {
-        def <- strsplit(ax$coordinates$time$calendar$definition, ' ', fixed = TRUE)[[1L]]
-        cs_conv$time(unit = def[1L], epoch = def[3L], calendar = ax$coordinates$time$calendar$calendar)
-      } else NULL
-
-      # Coordinates and axis
-      coords_def <- cs_conv$coordinates(values_def, unit = ax$coordinates$unit, time = time_def)
-      abbr <- ax$abbreviation
-      direction  <- cs_direction[[abbr]]
-      if (abbr == 'OTHER') abbr <- ''
-      cs_conv$axis(list(coords_def), abbreviation = abbr, direction = direction)
-    })
-
-    # Group axes into separate CRS objects by axis category
-    cs_conv$add_crs(axes = axis_defs[c(X_axis, Y_axis)])
-    cs_conv$add_crs(axes = axis_defs[which(ax_abbr == 'Z')])
-    cs_conv$add_crs(axes = axis_defs[which(ax_abbr == 'T')])
-    cs_conv$add_crs(axes = axis_defs[which(ax_abbr == 'OTHER')])
-
-    atts <- c(list(cs = cs_conv$as_list()), atts)
-  }
-
-  meta$attributes <- NULL # Remove any previous attributes
-  meta$attributes <- atts
-  meta
-}
-
 
 unused_imports <- function() {
   stringr::word

@@ -127,7 +127,7 @@ CFData <- R6::R6Class("CFData",
       # Set the actual_range attribute for the values
       if (is.null(values))
         self$delete_attribute("actual_range")
-      else {
+      else if (prod(dim(values)) <= CF.options$memory_cell_limit) {
         rng <- suppressWarnings(range(values, na.rm = TRUE))
         if (is.infinite(rng[1L]) || is.na(rng[1L]))
           self$delete_attribute("actual_range")

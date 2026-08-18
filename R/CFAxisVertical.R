@@ -468,6 +468,62 @@ CFAxisVertical <- R6::R6Class("CFAxisVertical",
       terms$param <- new_params
       self$set_parametric_terms(self$attribute("standard_name"), terms)
       invisible(self)
+    },
+
+    #' @description Create the GeoZarr coordinates for this vertical axis. If the
+    #'   coordinate values are not regular and longer than a set minimum, write
+    #'   the coordinates to the group as a new Zarr array if it does not yet
+    #'   exist. This will also include boundary values.
+    #' @param grp An instance of `zarr_group` where the coordinates will be
+    #'   located in the Zarr store. The coordinates will be written to a new
+    #'   Zarr array with the name based on the axis name if it is irregular and
+    #'   long.
+    #' @return An instance of [geozarr::Coordinates] or a descendant class.
+    geozarr_coordinates = function(grp) {
+      len <- self$length
+      vals <- self$values
+
+      unit <- self$attribute("units")
+      positive <- self$attribute("positive")
+      dir <- if (is.na(positive)) "DOWN"
+             else toupper(positive)
+
+      # Attributes that are structural are managed by the convention used
+      # so filter them out before writing. Leave a few that are descriptive of
+      # the data
+      atts <- private$zarr_attributes(c("axis", "bounds", "positive", "units"))
+
+      # Boundary values
+      bnds <- private$.bounds$values
+      if (!is.null(bnds)) {
+        if (.is_regular(vals - bnds[1L,]) && .is_regular(bnds[2L,] - vals))
+          # Regular, get up and down interval
+          bnds <- c(bnds[1L,1L] - vals[1L], bnds[2L,1L] - vals[1L])
+        else
+          # Irregular, write array to the Zarr group
+          private$.bounds$write_geozarr(grp)
+      }
+
+      # Irregular
+      if (self$length > geozarr::geozarr_options()$max_explicit) {
+        # Create a Zarr array for the axis coordinates if it does not already exist
+        if (is.null(grp$children[[self$name]])) {
+          ab <- zarr::array_builder$new()
+          ab$shape <- len
+          ab$data_type <- switch(storage.mode(vals),
+                                 "double" = "float64",
+                                 "integer" = "int32")
+          ab$chunk_shape <- len
+          if (len > zarr::zarr_options()$min_compress)
+            ab$add_codec("blosc", list(clevel = 6L))
+          new_array <- try(grp$add_array(self$name, ab), silent = TRUE)
+          if (inherits(new_array, "try-error"))
+            stop("Could not create Zarr array with name", self$name, call. = FALSE)
+          new_array$write(vals)
+        }
+      }
+
+      geozarr::Coordinates$new(self$name, dir, unit, vals, bnds)
     }
   ),
   active = list(
