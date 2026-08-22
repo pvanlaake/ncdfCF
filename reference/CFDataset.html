@@ -522,12 +522,13 @@ conventions, like <code>proj</code> or <code>ref</code>, will be used as needed.
 </div><p></p><div class="section">
 <h4 id="arguments-11">Arguments<a class="anchor" aria-label="anchor" href="#arguments-11"></a></h4>
 <p></p><div class="arguments"><dl><dt><code>zarr</code></dt>
-<dd><p>Fully-qualified file name or URI indicating where to save the
-data set to, or a <code>zarr</code> object. If a file name or URI, it must point
-to an existing Zarr store where the data from this dat aset will be
-appended, or a new Zarr store will be created by that name and then it
-can not already exist. By convention, a new Zarr store should have a
-".zarr" file name extension.</p></dd>
+<dd><p>Optional. Fully-qualified file name or URI indicating where
+to save the data set to, or a <code>zarr</code> object. If a file name or URI, it
+must point to an existing Zarr store where the data from this dat aset
+will be appended, or a new Zarr store will be created by that name and
+then it can not already exist. By convention, a new Zarr store should
+have a ".zarr" file name extension. If missing, create a Zarr store in
+memory.</p></dd>
 
       <dt><code>dataset_root</code></dt>
 <dd><p>Optional. Path to a node in the Zarr store where this
@@ -536,7 +537,8 @@ created. A path must start from the root node of the Zarr store and be
 specified like "/subgroup/sub/here" with the root of this data set
 starting at the indicated path. Defaults to the root of the Zarr store,
 "/". Alternatively, this may be a <code>zarr_group</code> to be used as the root
-for this data set, but only if argument <code>zarr</code> is a <code>zarr</code> object.</p></dd>
+for this data set, but only if argument <code>zarr</code> is a <code>zarr</code> object. If
+the <code>zarr</code> argument is not provided, this argument will be ignored.</p></dd>
 
 
 </dl><p></p></div>

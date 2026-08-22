@@ -58,6 +58,8 @@ which is an axis with character labels.
 
 - [`CFLabel$write()`](#method-CFLabel-write)
 
+- [`CFLabel$geozarr_coordinates()`](#method-CFLabel-geozarr_coordinates)
+
 Inherited methods
 
 - [`CFObject$append_attribute()`](https://r-cf.github.io/ncdfCF/reference/CFObject.html#method-append_attribute)
@@ -254,3 +256,29 @@ Write the labels to a netCDF file, including its attributes.
 #### Returns
 
 Self, invisibly.
+
+------------------------------------------------------------------------
+
+### `CFLabel$geozarr_coordinates()`
+
+Create the GeoZarr coordinates for this label set. If the label set is
+longer than a set minimum, write the label values to the group as a new
+Zarr array if it does not yet exist.
+
+#### Usage
+
+    CFLabel$geozarr_coordinates(grp)
+
+#### Arguments
+
+- `grp`:
+
+  An instance of `zarr_group` where the label values will be located in
+  the Zarr store. The label values will be written to a new Zarr array
+  with the name based on the name of this label set if it is irregular
+  and long.
+
+#### Returns
+
+An instance of
+[geozarr::CoordinatesString](https://rdrr.io/pkg/geozarr/man/CoordinatesString.html).

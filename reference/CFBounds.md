@@ -56,6 +56,8 @@ element).
 
 - [`CFBounds$write()`](#method-CFBounds-write)
 
+- [`CFBounds$write_geozarr()`](#method-CFBounds-write_geozarr)
+
 Inherited methods
 
 - [`CFObject$append_attribute()`](https://r-cf.github.io/ncdfCF/reference/CFObject.html#method-append_attribute)
@@ -291,3 +293,30 @@ automatically.
 
   The integer dimid of the object that uses these boundary values,
   usually an axis but could also be an auxiliary CV.
+
+------------------------------------------------------------------------
+
+### `CFBounds$write_geozarr()`
+
+Write the boundary values to a Zarr group, including its attributes, if
+it does not already exist.
+
+#### Usage
+
+    CFBounds$write_geozarr(grp, axis_name)
+
+#### Arguments
+
+- `grp`:
+
+  An instance of `zarr_group` to write the boundary values to. The data
+  will be written to a new Zarr array with the name of
+  `<axis_name>_bounds`.
+
+- `axis_name`:
+
+  The name of the axis owning these boundary values.
+
+#### Returns
+
+Self, invisibly.

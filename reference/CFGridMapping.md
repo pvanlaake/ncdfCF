@@ -118,8 +118,10 @@ Retrieve the CRS string for a specific variable.
 
 - `axis_info`:
 
-  A list with information that describes the axes of the `CFVariable`
-  instance to describe.
+  A list with information that describes the axes of the
+  [CFVariable](https://r-cf.github.io/ncdfCF/reference/CFVariable.md)
+  instance to describe. This list can be generated for a `CFVariable`
+  using the `.wkt2_axis_info()` function (not exported).
 
 #### Returns
 

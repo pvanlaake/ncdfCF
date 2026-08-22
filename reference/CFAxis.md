@@ -52,8 +52,8 @@ selectable through methods and fields in this class.
 
 - `regular`:
 
-  (read-only) Flag if the numeric, integer or time axis coordinates are
-  regular, meaning equally spaced.
+  (read-only) Flag if the numeric or time axis coordinates are regular,
+  meaning equally spaced.
 
 - `bounds`:
 
@@ -142,6 +142,10 @@ selectable through methods and fields in this class.
 - [`CFAxis$attach_to_group()`](#method-CFAxis-attach_to_group)
 
 - [`CFAxis$write()`](#method-CFAxis-write)
+
+- [`CFAxis$geozarr_axis()`](#method-CFAxis-geozarr_axis)
+
+- [`CFAxis$geozarr_coordinates()`](#method-CFAxis-geozarr_coordinates)
 
 Inherited methods
 
@@ -599,3 +603,54 @@ Write the axis to a netCDF file, including its attributes.
 #### Returns
 
 Self, invisibly.
+
+------------------------------------------------------------------------
+
+### `CFAxis$geozarr_axis()`
+
+Create the GeoZarr coordinate system axis for this axis, inclusive of
+auxiliary coordinates. This will also include boundary values.
+
+#### Usage
+
+    CFAxis$geozarr_axis(grp)
+
+#### Arguments
+
+- `grp`:
+
+  An instance of `zarr_group` where the axis will be located in the Zarr
+  store. The axis will be written to a new Zarr array with the name of
+  the axis if it is irregular and long.
+
+#### Returns
+
+An instance of
+[geozarr::CoordinateSystemAxis](https://rdrr.io/pkg/geozarr/man/CoordinateSystemAxis.html).
+
+------------------------------------------------------------------------
+
+### `CFAxis$geozarr_coordinates()`
+
+Create the GeoZarr coordinates for this axis. If the coordinate values
+are not regular and longer than a set minimum, write the coordinates to
+the group as a new Zarr array if it does not yet exist. This will also
+include boundary values.
+
+#### Usage
+
+    CFAxis$geozarr_coordinates(grp)
+
+#### Arguments
+
+- `grp`:
+
+  An instance of `zarr_group` where the coordinates will be located in
+  the Zarr store. The coordinates will be written to a new Zarr array
+  with the name based on the axis name if it is irregular and long.
+
+#### Returns
+
+An instance of
+[geozarr::Coordinates](https://rdrr.io/pkg/geozarr/man/Coordinates.html)
+or a descendant class.

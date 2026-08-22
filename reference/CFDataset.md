@@ -517,12 +517,13 @@ conventions, like `proj` or `ref`, will be used as needed.
 
 - `zarr`:
 
-  Fully-qualified file name or URI indicating where to save the data set
-  to, or a `zarr` object. If a file name or URI, it must point to an
-  existing Zarr store where the data from this dat aset will be
-  appended, or a new Zarr store will be created by that name and then it
-  can not already exist. By convention, a new Zarr store should have a
-  ".zarr" file name extension.
+  Optional. Fully-qualified file name or URI indicating where to save
+  the data set to, or a `zarr` object. If a file name or URI, it must
+  point to an existing Zarr store where the data from this dat aset will
+  be appended, or a new Zarr store will be created by that name and then
+  it can not already exist. By convention, a new Zarr store should have
+  a ".zarr" file name extension. If missing, create a Zarr store in
+  memory.
 
 - `dataset_root`:
 
@@ -532,7 +533,8 @@ conventions, like `proj` or `ref`, will be used as needed.
   "/subgroup/sub/here" with the root of this data set starting at the
   indicated path. Defaults to the root of the Zarr store, "/".
   Alternatively, this may be a `zarr_group` to be used as the root for
-  this data set, but only if argument `zarr` is a `zarr` object.
+  this data set, but only if argument `zarr` is a `zarr` object. If the
+  `zarr` argument is not provided, this argument will be ignored.
 
 #### Returns
 

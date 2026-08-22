@@ -62,6 +62,8 @@ Inherited methods
 - [`CFAxis$copy_terms()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-copy_terms)
 - [`CFAxis$copy_with_values()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-copy_with_values)
 - [`CFAxis$detach()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-detach)
+- [`CFAxis$geozarr_axis()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-geozarr_axis)
+- [`CFAxis$geozarr_coordinates()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-geozarr_coordinates)
 - [`CFAxis$identical()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-identical)
 - [`CFAxis$peek()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-peek)
 - [`CFAxis$shard()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-shard)
