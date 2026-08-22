@@ -75,4 +75,8 @@ reference:
   - NCGroup
   - NCDimension
   - NCVariable
-
+- subtitle: Other functions
+  desc: |
+    Assorted other functions.
+  contents:
+  - aggregate_geozarr

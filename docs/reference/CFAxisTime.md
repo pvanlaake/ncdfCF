@@ -49,6 +49,8 @@ This class represents a time axis. The functionality is provided by the
 
 - [`CFAxisTime$subset()`](#method-CFAxisTime-subset)
 
+- [`CFAxisTime$geozarr_coordinates()`](#method-CFAxisTime-geozarr_coordinates)
+
 Inherited methods
 
 - [`CFObject$append_attribute()`](https://r-cf.github.io/ncdfCF/reference/CFObject.html#method-append_attribute)
@@ -66,6 +68,7 @@ Inherited methods
 - [`CFAxis$configure_terms()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-configure_terms)
 - [`CFAxis$copy_terms()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-copy_terms)
 - [`CFAxis$detach()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-detach)
+- [`CFAxis$geozarr_axis()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-geozarr_axis)
 - [`CFAxis$peek()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-peek)
 - [`CFAxis$shard()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-shard)
 - [`CFAxis$write()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-write)
@@ -369,3 +372,29 @@ an axis which spans the range of indices given by the `rng` argument.
 A new `CFAxisTime` instance covering the indicated range of indices. If
 the value of the argument `rng` is `NULL`, return a copy of `self` as
 the new axis.
+
+------------------------------------------------------------------------
+
+### `CFAxisTime$geozarr_coordinates()`
+
+Create the GeoZarr coordinates for this time axis. If the coordinate
+values are not regular and longer than a set minimum, write the
+coordinates to the group as a new Zarr array if it does not yet exist.
+This will also include boundary values.
+
+#### Usage
+
+    CFAxisTime$geozarr_coordinates(grp)
+
+#### Arguments
+
+- `grp`:
+
+  An instance of `zarr_group` where the coordinates will be located in
+  the Zarr store. The coordinates will be written to a new Zarr array
+  with the name based on the axis name if it is irregular and long.
+
+#### Returns
+
+An instance of
+[geozarr::CoordinatesTime](https://rdrr.io/pkg/geozarr/man/CoordinatesTime.html).

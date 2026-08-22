@@ -42,7 +42,11 @@ to this instance before it can be used in analysis.
 
 ### `CFCellMeasure$new()`
 
-Create an instance of this class.
+Create an instance of this class. The instance may be based on a NC
+variable contained in the same resource as the referencing data
+variable, or it may be external. If internal, the CF variable will be
+created in the CF group that manages the NC group where the NC variable
+is located.
 
 #### Usage
 

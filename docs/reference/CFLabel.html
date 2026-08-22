@@ -97,6 +97,7 @@ value to anything other than the correct value will lead to disaster.</p></dd>
 <li><p><a href="#method-CFLabel-slice"><code>CFLabel$slice()</code></a></p></li>
 <li><p><a href="#method-CFLabel-subset"><code>CFLabel$subset()</code></a></p></li>
 <li><p><a href="#method-CFLabel-write"><code>CFLabel$write()</code></a></p></li>
+<li><p><a href="#method-CFLabel-geozarr_coordinates"><code>CFLabel$geozarr_coordinates()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFObject" data-id="append_attribute"><a href="CFObject.html#method-append_attribute"><code>CFObject$append_attribute()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFObject" data-id="attach_to_group"><a href="CFObject.html#method-attach_to_group"><code>CFObject$attach_to_group()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFObject" data-id="attribute"><a href="CFObject.html#method-attribute"><code>CFObject$attribute()</code></a></span></li>
@@ -270,6 +271,30 @@ the returned axis.</p></dd>
 </div><p></p><div class="section">
 <h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
 <p>Self, invisibly.</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-CFLabel-geozarr_coordinates"></a><div class="section">
+<h3 id="cflabel-geozarr-coordinates-"><code>CFLabel$geozarr_coordinates()</code><a class="anchor" aria-label="anchor" href="#cflabel-geozarr-coordinates-"></a></h3>
+<p>Create the GeoZarr coordinates for this label set. If the
+label set is longer than a set minimum, write the label values to the
+group as a new Zarr array if it does not yet exist.</p><div class="section">
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CFLabel</span><span class="op">$</span><span class="fu">geozarr_coordinates</span><span class="op">(</span><span class="va">grp</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-6">Arguments<a class="anchor" aria-label="anchor" href="#arguments-6"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>grp</code></dt>
+<dd><p>An instance of <code>zarr_group</code> where the label values will be
+located in the Zarr store. The label values will be written to a new
+Zarr array with the name based on the name of this label set if it is
+irregular and long.</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<p>An instance of <a href="https://rdrr.io/pkg/geozarr/man/CoordinatesString.html" class="external-link">geozarr::CoordinatesString</a>.</p>
 </div>
 
 </div>

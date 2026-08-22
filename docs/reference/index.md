@@ -170,3 +170,10 @@ reflect what is in the resource.
   : NetCDF dimension object
 - [`NCVariable`](https://r-cf.github.io/ncdfCF/reference/NCVariable.md)
   : NetCDF variable
+
+### Other functions
+
+Assorted other functions.
+
+- [`aggregate_geozarr()`](https://r-cf.github.io/ncdfCF/reference/aggregate_geozarr.md)
+  : Aggregate multiple CF files into GeoZarr arrays

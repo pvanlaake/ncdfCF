@@ -55,6 +55,7 @@ Inherited methods
 - [`CFVariable$terra()`](https://r-cf.github.io/ncdfCF/reference/CFVariable.html#method-terra)
 - [`CFVariable$time()`](https://r-cf.github.io/ncdfCF/reference/CFVariable.html#method-time)
 - [`CFVariable$write()`](https://r-cf.github.io/ncdfCF/reference/CFVariable.html#method-write)
+- [`CFVariable$write_geozarr()`](https://r-cf.github.io/ncdfCF/reference/CFVariable.html#method-write_geozarr)
 
 ------------------------------------------------------------------------
 

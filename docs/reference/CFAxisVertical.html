@@ -124,6 +124,7 @@ will access the standard names table.</p></dd>
 <li><p><a href="#method-CFAxisVertical-append"><code>CFAxisVertical$append()</code></a></p></li>
 <li><p><a href="#method-CFAxisVertical-subset"><code>CFAxisVertical$subset()</code></a></p></li>
 <li><p><a href="#method-CFAxisVertical-subset_parametric_terms"><code>CFAxisVertical$subset_parametric_terms()</code></a></p></li>
+<li><p><a href="#method-CFAxisVertical-geozarr_coordinates"><code>CFAxisVertical$geozarr_coordinates()</code></a></p></li>
 </ul></div><p><details><summary>Inherited methods</summary><ul><li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFObject" data-id="append_attribute"><a href="CFObject.html#method-append_attribute"><code>CFObject$append_attribute()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFObject" data-id="attribute"><a href="CFObject.html#method-attribute"><code>CFObject$attribute()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFObject" data-id="attributes_identical"><a href="CFObject.html#method-attributes_identical"><code>CFObject$attributes_identical()</code></a></span></li>
@@ -137,6 +138,7 @@ will access the standard names table.</p></dd>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="can_append"><a href="CFAxis.html#method-can_append"><code>CFAxis$can_append()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="configure_terms"><a href="CFAxis.html#method-configure_terms"><code>CFAxis$configure_terms()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="copy_terms"><a href="CFAxis.html#method-copy_terms"><code>CFAxis$copy_terms()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="geozarr_axis"><a href="CFAxis.html#method-geozarr_axis"><code>CFAxis$geozarr_axis()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="peek"><a href="CFAxis.html#method-peek"><code>CFAxis$peek()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="shard"><a href="CFAxis.html#method-shard"><code>CFAxis$shard()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="write"><a href="CFAxis.html#method-write"><code>CFAxis$write()</code></a></span></li>
@@ -432,6 +434,31 @@ grid transformation is specified.</p></dd>
 <h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
 <p>Self, invisibly. The parametric terms will have been subset in
 this axis.</p>
+</div>
+
+</div>
+
+<p></p><hr><a id="method-CFAxisVertical-geozarr_coordinates"></a><div class="section">
+<h3 id="cfaxisvertical-geozarr-coordinates-"><code>CFAxisVertical$geozarr_coordinates()</code><a class="anchor" aria-label="anchor" href="#cfaxisvertical-geozarr-coordinates-"></a></h3>
+<p>Create the GeoZarr coordinates for this vertical axis. If the
+coordinate values are not regular and longer than a set minimum, write
+the coordinates to the group as a new Zarr array if it does not yet
+exist. This will also include boundary values.</p><div class="section">
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">CFAxisVertical</span><span class="op">$</span><span class="fu">geozarr_coordinates</span><span class="op">(</span><span class="va">grp</span><span class="op">)</span></span></code></pre></div><p></p></div>
+</div><p></p><div class="section">
+<h4 id="arguments-8">Arguments<a class="anchor" aria-label="anchor" href="#arguments-8"></a></h4>
+<p></p><div class="arguments"><dl><dt><code>grp</code></dt>
+<dd><p>An instance of <code>zarr_group</code> where the coordinates will be
+located in the Zarr store. The coordinates will be written to a new
+Zarr array with the name based on the axis name if it is irregular and
+long.</p></dd>
+
+
+</dl><p></p></div>
+</div><p></p><div class="section">
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
+<p>An instance of <a href="https://rdrr.io/pkg/geozarr/man/Coordinates.html" class="external-link">geozarr::Coordinates</a> or a descendant class.</p>
 </div>
 
 </div>

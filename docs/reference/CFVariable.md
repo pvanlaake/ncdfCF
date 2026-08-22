@@ -122,6 +122,8 @@ grid mapping parameters, etc.
 
 - [`CFVariable$write()`](#method-CFVariable-write)
 
+- [`CFVariable$write_geozarr()`](#method-CFVariable-write_geozarr)
+
 - [`CFVariable$save()`](#method-CFVariable-save)
 
 Inherited methods
@@ -831,6 +833,31 @@ unlimited.
   the "NC_SHORT" data type, i.e. 16-bits per value. If the variable has
   been written before, the packing state of the variable on file will be
   used.
+
+#### Returns
+
+Self, invisibly.
+
+------------------------------------------------------------------------
+
+### `CFVariable$write_geozarr()`
+
+Write the data variable to a Zarr group, including its attributes and
+other assorted objects. Axes, auxiliary coordinates and boundary values
+that are regular or short are written inline in the attributes of the
+array, irregular ones have already been stored externally.
+
+#### Usage
+
+    CFVariable$write_geozarr(grp)
+
+#### Arguments
+
+- `grp`:
+
+  An instance of `zarr_group` to write the data variable to. The data
+  variable will be written to a new Zarr array with the name of the data
+  variable.
 
 #### Returns
 

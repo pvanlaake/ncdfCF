@@ -39,7 +39,7 @@ fn <- system.file("extdata",
   package = "ncdfCF")
 (ds <- open_ncdf(fn))
 #> <Dataset> pr_day_EC-Earth3-CC_ssp245_r1i1p1f1_gr_20230101-20231231_vncdfCF 
-#> Resource   : /private/var/folders/gs/s0mmlczn4l7bjbmwfrrhjlt80000gn/T/RtmpiIL9jk/temp_libpathb3952c8f5b74/ncdfCF/extdata/pr_day_EC-Earth3-CC_ssp245_r1i1p1f1_gr_20230101-20231231_vncdfCF.nc 
+#> Resource   : /private/var/folders/gs/s0mmlczn4l7bjbmwfrrhjlt80000gn/T/RtmpkmkkEd/temp_libpath1819593f9ff9/ncdfCF/extdata/pr_day_EC-Earth3-CC_ssp245_r1i1p1f1_gr_20230101-20231231_vncdfCF.nc 
 #> Format     : netcdf4 
 #> Collection : CMIP6 
 #> Conventions: CF-1.7 CMIP-6.2 

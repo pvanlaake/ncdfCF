@@ -35,7 +35,7 @@ fn <- system.file("extdata",
   package = "ncdfCF")
 peek_ncdf(fn)
 #> $uri
-#> [1] "/private/var/folders/gs/s0mmlczn4l7bjbmwfrrhjlt80000gn/T/RtmpiIL9jk/temp_libpathb3952c8f5b74/ncdfCF/extdata/pr_day_EC-Earth3-CC_ssp245_r1i1p1f1_gr_20230101-20231231_vncdfCF.nc"
+#> [1] "/private/var/folders/gs/s0mmlczn4l7bjbmwfrrhjlt80000gn/T/RtmpkmkkEd/temp_libpath1819593f9ff9/ncdfCF/extdata/pr_day_EC-Earth3-CC_ssp245_r1i1p1f1_gr_20230101-20231231_vncdfCF.nc"
 #> 
 #> $type
 #> [1] "CMIP6"

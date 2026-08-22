@@ -79,6 +79,8 @@ https://www.myroms.org/wiki/Vertical_S-coordinate
 
 - [`CFAxisVertical$subset_parametric_terms()`](#method-CFAxisVertical-subset_parametric_terms)
 
+- [`CFAxisVertical$geozarr_coordinates()`](#method-CFAxisVertical-geozarr_coordinates)
+
 Inherited methods
 
 - [`CFObject$append_attribute()`](https://r-cf.github.io/ncdfCF/reference/CFObject.html#method-append_attribute)
@@ -94,6 +96,7 @@ Inherited methods
 - [`CFAxis$can_append()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-can_append)
 - [`CFAxis$configure_terms()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-configure_terms)
 - [`CFAxis$copy_terms()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-copy_terms)
+- [`CFAxis$geozarr_axis()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-geozarr_axis)
 - [`CFAxis$peek()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-peek)
 - [`CFAxis$shard()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-shard)
 - [`CFAxis$write()`](https://r-cf.github.io/ncdfCF/reference/CFAxis.html#method-write)
@@ -430,3 +433,30 @@ Subset the parametric terms of this axis.
 
 Self, invisibly. The parametric terms will have been subset in this
 axis.
+
+------------------------------------------------------------------------
+
+### `CFAxisVertical$geozarr_coordinates()`
+
+Create the GeoZarr coordinates for this vertical axis. If the coordinate
+values are not regular and longer than a set minimum, write the
+coordinates to the group as a new Zarr array if it does not yet exist.
+This will also include boundary values.
+
+#### Usage
+
+    CFAxisVertical$geozarr_coordinates(grp)
+
+#### Arguments
+
+- `grp`:
+
+  An instance of `zarr_group` where the coordinates will be located in
+  the Zarr store. The coordinates will be written to a new Zarr array
+  with the name based on the axis name if it is irregular and long.
+
+#### Returns
+
+An instance of
+[geozarr::Coordinates](https://rdrr.io/pkg/geozarr/man/Coordinates.html)
+or a descendant class.
