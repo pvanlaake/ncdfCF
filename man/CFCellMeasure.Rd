@@ -40,7 +40,11 @@ or an external variable.}
 \if{html}{\out{<a id="method-CFCellMeasure-initialize"></a>}}
 \if{latex}{\out{\hypertarget{method-CFCellMeasure-initialize}{}}}
 \subsection{\code{CFCellMeasure$new()}}{
-  Create an instance of this class.
+  Create an instance of this class. The instance may be based
+on a NC variable contained in the same resource as the referencing data
+variable, or it may be external. If internal, the CF variable will be
+created in the CF group that manages the NC group where the NC
+variable is located.
   \subsection{Usage}{
     \if{html}{\out{<div class="r">}}
     \preformatted{CFCellMeasure$new(measure, name, nc_var = NULL, axes = NULL)}

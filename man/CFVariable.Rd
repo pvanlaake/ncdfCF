@@ -81,6 +81,7 @@ description of the variable as a WKT2 string.}
     \item \href{#method-CFVariable-terra}{\code{CFVariable$terra()}}
     \item \href{#method-CFVariable-data.table}{\code{CFVariable$data.table()}}
     \item \href{#method-CFVariable-write}{\code{CFVariable$write()}}
+    \item \href{#method-CFVariable-write_geozarr}{\code{CFVariable$write_geozarr()}}
     \item \href{#method-CFVariable-save}{\code{CFVariable$save()}}
   }
 }
@@ -757,6 +758,34 @@ numeric data; packing is not performed on integer values. Packing is
 always to the "NC_SHORT" data type, i.e. 16-bits per value. If the
 variable has been written before, the packing state of the variable on
 file will be used.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Self, invisibly.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CFVariable-write_geozarr"></a>}}
+\if{latex}{\out{\hypertarget{method-CFVariable-write_geozarr}{}}}
+\subsection{\code{CFVariable$write_geozarr()}}{
+  Write the data variable to a Zarr group, including its
+attributes and other assorted objects. Axes, auxiliary coordinates and
+boundary values that are regular or short are written inline in the
+attributes of the array, irregular ones have already been stored
+externally.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CFVariable$write_geozarr(grp)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{grp}}{An instance of \code{zarr_group} to write the data variable to. The
+data variable will be written to a new Zarr array with the name of the
+data variable.}
     }
     \if{html}{\out{</div>}}
   }

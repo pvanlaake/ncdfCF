@@ -58,6 +58,7 @@ will access the standard names table.}
     \item \href{#method-CFAxisVertical-append}{\code{CFAxisVertical$append()}}
     \item \href{#method-CFAxisVertical-subset}{\code{CFAxisVertical$subset()}}
     \item \href{#method-CFAxisVertical-subset_parametric_terms}{\code{CFAxisVertical$subset_parametric_terms()}}
+    \item \href{#method-CFAxisVertical-geozarr_coordinates}{\code{CFAxisVertical$geozarr_coordinates()}}
   }
 }
 \if{html}{\out{<details><summary>Inherited methods</summary>
@@ -75,6 +76,7 @@ will access the standard names table.}
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="can_append"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-can_append'><code>CFAxis$can_append()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="configure_terms"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-configure_terms'><code>CFAxis$configure_terms()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="copy_terms"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-copy_terms'><code>CFAxis$copy_terms()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="geozarr_axis"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-geozarr_axis'><code>CFAxis$geozarr_axis()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="peek"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-peek'><code>CFAxis$peek()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="shard"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-shard'><code>CFAxis$shard()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="write"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-write'><code>CFAxis$write()</code></a></span></li>
@@ -367,6 +369,34 @@ grid transformation is specified.}
   \subsection{Returns}{
     Self, invisibly. The parametric terms will have been subset in
 this axis.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CFAxisVertical-geozarr_coordinates"></a>}}
+\if{latex}{\out{\hypertarget{method-CFAxisVertical-geozarr_coordinates}{}}}
+\subsection{\code{CFAxisVertical$geozarr_coordinates()}}{
+  Create the GeoZarr coordinates for this vertical axis. If the
+coordinate values are not regular and longer than a set minimum, write
+the coordinates to the group as a new Zarr array if it does not yet
+exist. This will also include boundary values.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CFAxisVertical$geozarr_coordinates(grp)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{grp}}{An instance of \code{zarr_group} where the coordinates will be
+located in the Zarr store. The coordinates will be written to a new
+Zarr array with the name based on the axis name if it is irregular and
+long.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    An instance of \link[geozarr:Coordinates]{geozarr::Coordinates} or a descendant class.
   }
 }
 

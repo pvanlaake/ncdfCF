@@ -65,6 +65,7 @@ Metadata Conventions.}
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFVariable" data-id="terra"><a href='../../ncdfCF/html/CFVariable.html#method-CFVariable-terra'><code>CFVariable$terra()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFVariable" data-id="time"><a href='../../ncdfCF/html/CFVariable.html#method-CFVariable-time'><code>CFVariable$time()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFVariable" data-id="write"><a href='../../ncdfCF/html/CFVariable.html#method-CFVariable-write'><code>CFVariable$write()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFVariable" data-id="write_geozarr"><a href='../../ncdfCF/html/CFVariable.html#method-CFVariable-write_geozarr'><code>CFVariable$write_geozarr()</code></a></span></li>
 </ul>
 </details>}}
 \if{html}{\out{<hr>}}

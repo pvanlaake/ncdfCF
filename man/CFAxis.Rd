@@ -39,8 +39,8 @@ you should use the \code{coordinates} field rather than this one.}
     \item{\code{coordinates}}{(read-only) Retrieve the coordinate values of the
 active coordinate set from the axis.}
 
-    \item{\code{regular}}{(read-only) Flag if the numeric, integer or time axis
-coordinates are regular, meaning equally spaced.}
+    \item{\code{regular}}{(read-only) Flag if the numeric or time axis coordinates
+are regular, meaning equally spaced.}
 
     \item{\code{bounds}}{Set or retrieve the bounds of this axis as a \link{CFBounds}
 object. When setting the bounds, the bounds values must agree with the
@@ -98,6 +98,8 @@ has parametric coordinates. Always \code{FALSE} for all axes except for
     \item \href{#method-CFAxis-indexOf}{\code{CFAxis$indexOf()}}
     \item \href{#method-CFAxis-attach_to_group}{\code{CFAxis$attach_to_group()}}
     \item \href{#method-CFAxis-write}{\code{CFAxis$write()}}
+    \item \href{#method-CFAxis-geozarr_axis}{\code{CFAxis$geozarr_axis()}}
+    \item \href{#method-CFAxis-geozarr_coordinates}{\code{CFAxis$geozarr_coordinates()}}
   }
 }
 \if{html}{\out{<details><summary>Inherited methods</summary>
@@ -522,6 +524,60 @@ not provided, all associated objects will be stored in this group.}
   }
   \subsection{Returns}{
     Self, invisibly.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CFAxis-geozarr_axis"></a>}}
+\if{latex}{\out{\hypertarget{method-CFAxis-geozarr_axis}{}}}
+\subsection{\code{CFAxis$geozarr_axis()}}{
+  Create the GeoZarr coordinate system axis for this axis,
+inclusive of auxiliary coordinates. This will also include boundary
+values.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CFAxis$geozarr_axis(grp)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{grp}}{An instance of \code{zarr_group} where the axis will be located in
+the Zarr store. The axis will be written to a new Zarr array with the
+name of the axis if it is irregular and long.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    An instance of \link[geozarr:CoordinateSystemAxis]{geozarr::CoordinateSystemAxis}.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CFAxis-geozarr_coordinates"></a>}}
+\if{latex}{\out{\hypertarget{method-CFAxis-geozarr_coordinates}{}}}
+\subsection{\code{CFAxis$geozarr_coordinates()}}{
+  Create the GeoZarr coordinates for this axis. If the
+coordinate values are not regular and longer than a set minimum, write
+the coordinates to the group as a new Zarr array if it does not yet
+exist. This will also include boundary values.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CFAxis$geozarr_coordinates(grp)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{grp}}{An instance of \code{zarr_group} where the coordinates will be
+located in the Zarr store. The coordinates will be written to a new
+Zarr array with the name based on the axis name if it is irregular and
+long.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    An instance of \link[geozarr:Coordinates]{geozarr::Coordinates} or a descendant class.
   }
 }
 

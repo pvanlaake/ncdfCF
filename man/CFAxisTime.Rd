@@ -37,6 +37,7 @@ vector.}
     \item \href{#method-CFAxisTime-indexOf}{\code{CFAxisTime$indexOf()}}
     \item \href{#method-CFAxisTime-slice}{\code{CFAxisTime$slice()}}
     \item \href{#method-CFAxisTime-subset}{\code{CFAxisTime$subset()}}
+    \item \href{#method-CFAxisTime-geozarr_coordinates}{\code{CFAxisTime$geozarr_coordinates()}}
   }
 }
 \if{html}{\out{<details><summary>Inherited methods</summary>
@@ -56,6 +57,7 @@ vector.}
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="configure_terms"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-configure_terms'><code>CFAxis$configure_terms()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="copy_terms"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-copy_terms'><code>CFAxis$copy_terms()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="detach"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-detach'><code>CFAxis$detach()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="geozarr_axis"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-geozarr_axis'><code>CFAxis$geozarr_axis()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="peek"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-peek'><code>CFAxis$peek()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="shard"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-shard'><code>CFAxis$shard()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="write"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-write'><code>CFAxis$write()</code></a></span></li>
@@ -335,6 +337,34 @@ copy of the axis.}
     A new \code{CFAxisTime} instance covering the indicated range of
 indices. If the value of the argument \code{rng} is \code{NULL}, return a copy of
 \code{self} as the new axis.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CFAxisTime-geozarr_coordinates"></a>}}
+\if{latex}{\out{\hypertarget{method-CFAxisTime-geozarr_coordinates}{}}}
+\subsection{\code{CFAxisTime$geozarr_coordinates()}}{
+  Create the GeoZarr coordinates for this time axis. If the
+coordinate values are not regular and longer than a set minimum, write
+the coordinates to the group as a new Zarr array if it does not yet
+exist. This will also include boundary values.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CFAxisTime$geozarr_coordinates(grp)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{grp}}{An instance of \code{zarr_group} where the coordinates will be
+located in the Zarr store. The coordinates will be written to a new
+Zarr array with the name based on the axis name if it is irregular and
+long.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    An instance of \link[geozarr:CoordinatesTime]{geozarr::CoordinatesTime}.
   }
 }
 

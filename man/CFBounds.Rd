@@ -43,6 +43,7 @@ is a linked netCDF resource, this object will be detached from it.}
     \item \href{#method-CFBounds-subset}{\code{CFBounds$subset()}}
     \item \href{#method-CFBounds-append}{\code{CFBounds$append()}}
     \item \href{#method-CFBounds-write}{\code{CFBounds$write()}}
+    \item \href{#method-CFBounds-write_geozarr}{\code{CFBounds$write_geozarr()}}
   }
 }
 \if{html}{\out{<details><summary>Inherited methods</summary>
@@ -262,6 +263,32 @@ this method automatically.
 values, usually an axis but could also be an auxiliary CV.}
     }
     \if{html}{\out{</div>}}
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CFBounds-write_geozarr"></a>}}
+\if{latex}{\out{\hypertarget{method-CFBounds-write_geozarr}{}}}
+\subsection{\code{CFBounds$write_geozarr()}}{
+  Write the boundary values to a Zarr group, including its
+attributes, if it does not already exist.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CFBounds$write_geozarr(grp, axis_name)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{grp}}{An instance of \code{zarr_group} to write the boundary values to.
+The data will be written to a new Zarr array with the name of
+\verb{<axis_name>_bounds}.}
+      \item{\code{axis_name}}{The name of the axis owning these boundary values.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Self, invisibly.
   }
 }
 

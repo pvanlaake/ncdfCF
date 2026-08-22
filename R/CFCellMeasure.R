@@ -51,8 +51,11 @@ CFCellMeasure <- R6::R6Class("CFCellMeasure",
     }
   ),
   public = list(
-    #' @description Create an instance of this class.
-    #'
+    #' @description Create an instance of this class. The instance may be based
+    #'   on a NC variable contained in the same resource as the referencing data
+    #'   variable, or it may be external. If internal, the CF variable will be
+    #'   created in the CF group that manages the NC group where the NC
+    #'   variable is located.
     #' @param measure The measure of this object. Must be either of "area" or
     #'   "volume".
     #' @param name The name of the cell measure variable. Ignored if argument
@@ -69,7 +72,7 @@ CFCellMeasure <- R6::R6Class("CFCellMeasure",
         stop("Invalid 'measure' for cell measure variable.", call. = FALSE)
 
       if (!(is.null(nc_var) || is.null(axes))) {
-        private$.var <- CFVariable$new(nc_var, axes)
+        private$.var <- CFVariable$new(nc_var, group = nc_var$group$CF, axes = axes)
         private$.name <- nc_var$name
         private$.axes <- axes
       } else

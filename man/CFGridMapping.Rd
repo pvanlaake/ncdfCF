@@ -119,7 +119,8 @@ grid mapping.
     \if{html}{\out{<div class="arguments">}}
     \describe{
       \item{\code{axis_info}}{A list with information that describes the axes of the
-\code{CFVariable} instance to describe.}
+\link{CFVariable} instance to describe. This list can be generated for a
+\code{CFVariable} using the \code{.wkt2_axis_info()} function (not exported).}
     }
     \if{html}{\out{</div>}}
   }

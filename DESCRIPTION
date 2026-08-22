@@ -49,6 +49,7 @@ Collate:
     'NCGroup.R'
     'NCResource.R'
     'NCVariable.R'
+    'aggregate.R'
     'makeCFObjects.R'
     'ncdfCF-package.R'
     'ops.R'
@@ -57,7 +58,6 @@ Collate:
     'utils.R'
     'wkt2.R'
     'zzz.R'
-    'aggregate.R'
 Suggests: 
     data.table,
     geozarr,

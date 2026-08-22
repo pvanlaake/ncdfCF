@@ -54,6 +54,8 @@ vector, or labels for every axis element if they have been set.}
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="copy_terms"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-copy_terms'><code>CFAxis$copy_terms()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="copy_with_values"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-copy_with_values'><code>CFAxis$copy_with_values()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="detach"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-detach'><code>CFAxis$detach()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="geozarr_axis"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-geozarr_axis'><code>CFAxis$geozarr_axis()</code></a></span></li>
+  <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="geozarr_coordinates"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-geozarr_coordinates'><code>CFAxis$geozarr_coordinates()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="identical"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-identical'><code>CFAxis$identical()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="peek"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-peek'><code>CFAxis$peek()</code></a></span></li>
   <li><span class="pkg-link" data-pkg="ncdfCF" data-topic="CFAxis" data-id="shard"><a href='../../ncdfCF/html/CFAxis.html#method-CFAxis-shard'><code>CFAxis$shard()</code></a></span></li>

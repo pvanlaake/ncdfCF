@@ -43,6 +43,7 @@ value to anything other than the correct value will lead to disaster.}
     \item \href{#method-CFLabel-slice}{\code{CFLabel$slice()}}
     \item \href{#method-CFLabel-subset}{\code{CFLabel$subset()}}
     \item \href{#method-CFLabel-write}{\code{CFLabel$write()}}
+    \item \href{#method-CFLabel-geozarr_coordinates}{\code{CFLabel$geozarr_coordinates()}}
   }
 }
 \if{html}{\out{<details><summary>Inherited methods</summary>
@@ -230,6 +231,33 @@ the returned axis.}
   }
   \subsection{Returns}{
     Self, invisibly.
+  }
+}
+
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-CFLabel-geozarr_coordinates"></a>}}
+\if{latex}{\out{\hypertarget{method-CFLabel-geozarr_coordinates}{}}}
+\subsection{\code{CFLabel$geozarr_coordinates()}}{
+  Create the GeoZarr coordinates for this label set. If the
+label set is longer than a set minimum, write the label values to the
+group as a new Zarr array if it does not yet exist.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{CFLabel$geozarr_coordinates(grp)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{grp}}{An instance of \code{zarr_group} where the label values will be
+located in the Zarr store. The label values will be written to a new
+Zarr array with the name based on the name of this label set if it is
+irregular and long.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    An instance of \link[geozarr:CoordinatesString]{geozarr::CoordinatesString}.
   }
 }
 
