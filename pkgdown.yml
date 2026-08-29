@@ -6,7 +6,7 @@ articles:
   articles/32_R-CF: 32_R-CF.html
   articles/33_Troubleshooting: 33_Troubleshooting.html
   ncdfCF: ncdfCF.html
-last_built: 2026-08-22T09:04Z
+last_built: 2026-08-29T10:52Z
 urls:
   reference: https://r-cf.github.io/ncdfCF/reference
   article: https://r-cf.github.io/ncdfCF/articles
