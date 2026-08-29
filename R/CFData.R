@@ -64,8 +64,9 @@ CFData <- R6::R6Class("CFData",
     },
 
     # Sanitize the start and count values. Called during initialization and by
-    # read_chunk(). NAs are converted to numbers and values have to agree with
-    # .dims. Returns the sanitized start and count vectors as a list.
+    # read_chunk()/read_window(). NAs are converted to numbers and values have
+    # to agree with .dims. Returns the sanitized start and count vectors as a
+    # list.
     check_start_count = function(start, count) {
       d <- private$.dims
       len <- length(d)
@@ -76,9 +77,9 @@ CFData <- R6::R6Class("CFData",
       else if (length(start) == len) {
         start[is.na(start)] <- 1L
         if (any(start > d))
-          stop("Start values cannot be larger than the dimensions of the data.", call. = FALSE) # nocov
+          stop("Start values cannot be larger than the dimensions of the data", call. = FALSE) # nocov
       } else
-        stop("`start` vector is not the length of the object dimensions.", call. = FALSE)
+        stop("`start` vector is not the length of the object dimensions", call. = FALSE)
 
       if (length(count) == 1L && is.na(count))
         count <- d - start + 1L
@@ -86,11 +87,75 @@ CFData <- R6::R6Class("CFData",
         ndx <- which(is.na(count))
         count[ndx] <- d[ndx] - start[ndx] + 1L
         if (any(count > d - start + 1L))
-          stop("Count values cannot extend beyond the dimensions of the data.", call. = FALSE) # nocov
+          stop("Count values cannot extend beyond the dimensions of the data", call. = FALSE) # nocov
       } else
-        stop("`count` vector is not the length of the object dimensions.", call. = FALSE)
+        stop("`count` vector is not the length of the object dimensions", call. = FALSE)
 
       list(start = start, count = count)
+    },
+
+    # Translate local (validated, .dims-relative) start/count into the
+    # file-absolute (NC-space) indices NCobj$get_data()/write_data()
+    # require, applying this object's .NC_map offset. Only meaningful when
+    # .NC_map is non-empty; callers with an empty .NC_map are already in
+    # NC-space (nothing to translate) and must not call this.
+    to_nc_indices = function(local_start, local_count) {
+      len <- length(private$.NC_map$start)
+      list(start = private$.NC_map$start + local_start[seq_len(len)] - 1L,
+           count = local_count[seq_len(len)])
+    },
+
+    # Warn if reading `count` elements at the object's current data type
+    # would allocate more than CF.options$memory_cell_limit bytes. For
+    # packed data, RNetCDF's unpack=TRUE typically widens to double
+    # regardless of the on-disk (packed) type -- fitnum may narrow it back
+    # down afterwards, but that's not knowable in advance, so packed
+    # variables are sized conservatively at 8 bytes/element here. Returns
+    # the estimated byte count, invisibly, or NA if the type is unknown.
+    check_memory_limit = function(count) {
+      itemsize <- if (!is.null(private$.NCobj) && private$.NCobj$is_packed) 8L
+      else .nc_type_size(private$.data_type)
+      if (is.na(itemsize)) return(invisible(NA_real_))
+
+      bytes <- prod(count) * itemsize
+      if (bytes > CF.options$memory_cell_limit)
+        warning(sprintf(
+          "Reading %s elements will allocate approximately %s, exceeding the memory limit (%s). Consider reading a smaller extent, or raise the limit if you have the memory to spare",
+          paste(count, collapse = "x"), .format_bytes(bytes), .format_bytes(CF.options$memory_cell_limit)),
+          call. = FALSE)
+      invisible(bytes)
+    },
+
+    # Core chunk-planned read + reassembly for resolved start/count,
+    # in whatever coordinate space the caller has established is correct for
+    # them (file-relative for a .NC_map read, local for a validated one). No
+    # NA resolution, no bounds-checking against .dims -- that's the caller's
+    # job, done once before calling this.
+    read_window_core = function(start, count, reader) {
+      bytes <- private$check_memory_limit(count)
+
+      if (!is.na(bytes) && bytes <= CF.options$memory_cell_limit)
+        return(reader(start, count))  # fits outright: skip .chunk_plan() entirely
+
+      chunks <- if (!is.null(private$.NCobj)) private$.NCobj$netcdf4$chunksizes else NULL
+      itemsize <- if (!is.null(private$.NCobj) && private$.NCobj$is_packed) 8L
+      else (.nc_type_size(private$.data_type) %||% 8L)
+
+      plan <- .chunk_plan(count, chunks, start, count, itemsize, CF.options$memory_cell_limit)
+      if (length(plan) == 1L)
+        return(reader(plan[[1L]]$start, plan[[1L]]$count))
+
+      out <- NULL
+      for (p in plan) {
+        block <- reader(p$start, p$count)
+        if (is.null(out)) out <- array(vector(storage.mode(block), prod(count)), dim = count)
+        idx <- lapply(seq_along(count), function(d) {
+          off <- p$start[d] - start[d]
+          seq.int(off + 1L, off + p$count[d])
+        })
+        out <- do.call(`[<-`, c(list(out), idx, list(value = block)))
+      }
+      out
     },
 
     # Set the values of the object. Perform some basic checks when set programmatically.
@@ -127,7 +192,7 @@ CFData <- R6::R6Class("CFData",
       # Set the actual_range attribute for the values
       if (is.null(values))
         self$delete_attribute("actual_range")
-      else if (prod(dim(values)) <= CF.options$memory_cell_limit) {
+      else if (prod(dim(values)) * (.nc_type_size(private$.data_type) %||% 8L) <= CF.options$memory_cell_limit) {
         rng <- suppressWarnings(range(values, na.rm = TRUE))
         if (is.infinite(rng[1L]) || is.na(rng[1L]))
           self$delete_attribute("actual_range")
@@ -165,9 +230,8 @@ CFData <- R6::R6Class("CFData",
           # are trimmed to that length (noting that there may be "scalar" axes
           # in a variable backed by a netCDF resource).
           sc <- private$check_start_count(start, count)
-          len <- length(private$.NC_map$start)
-          start <- private$.NC_map$start + sc$start[1L:len] - 1L
-          private$.NCobj$write_data(d = dt, start = start, count = sc$count[1L:len], ...)
+          nc <- private$to_nc_indices(sc$start, sc$count)
+          private$.NCobj$write_data(d = dt, start = nc$start, count = nc$count, ...)
         } else {
           # .NC_map is an empty list for private$.values being a complete array.
           private$.NCobj$write_data(d = dt, start = NA, count = NA, ...)
@@ -252,7 +316,8 @@ CFData <- R6::R6Class("CFData",
     #' argument `refresh` is `TRUE`. This method will not assess how big the
     #' data is before reading it so there is a chance that memory will be
     #' exhausted. The calling code should check for this possibility and break
-    #' up the reading of data into chunks.
+    #' up the reading of data into chunks using `read_chunk()` or
+    #' `read_window()` - these methods will not cache the data, however.
     #' @param refresh Should the data be read from file if the object is linked?
     #'   This will replace current values, if previously loaded. Default
     #'   `FALSE`.
@@ -262,9 +327,16 @@ CFData <- R6::R6Class("CFData",
     read_data = function(refresh = FALSE) {
       if ((!is.null(private$.NCobj)) && (is.null(private$.values) || refresh)) {
         if (!length(private$.NC_map))
-          private$set_values(private$.NCobj$get_data())
+          # No .NC_map: local space and NC-space coincide, so a full-extent read
+          # against .dims is valid: read directly.
+          private$set_values(
+            private$read_window_core(rep(1L, length(private$.dims)), private$.dims,
+                                     private$.NCobj$get_data))
         else
-          private$set_values(private$.NCobj$get_data(private$.NC_map$start, private$.NC_map$count))
+          # .NC_map is in NC-space: read directly via NCobj$get_data().
+          private$set_values(
+            private$read_window_core(private$.NC_map$start, private$.NC_map$count,
+                                     private$.NCobj$get_data))
       }
       invisible(private$.values)
     },
@@ -273,7 +345,8 @@ CFData <- R6::R6Class("CFData",
     #' `count` vectors. Note that these vectors are relative to any subset of
     #' the data variable that this CF object refers to. The data read by this
     #' method will not be stored in `self` so the calling code must take a
-    #' reference to it.
+    #' reference to it. If the chunk is (potentially) large, use `read_window()`
+    #' for additional safeguards against memory exhaustion.
     #' @param start Vector of indices where to start reading data along the
     #'   dimensions of the array. The vector must be `NA` to read all data,
     #'   otherwise it must agree with the dimensions of the array.
@@ -288,17 +361,30 @@ CFData <- R6::R6Class("CFData",
       if (!length(sc)) return (NULL)
 
       if (!is.null(private$.values)) {
-        # Extract from loaded data
         cll <- paste0("private$.values[", paste(sc$start, ":", sc$start + sc$count - 1L, sep = "", collapse = ", "), "]")
         eval(parse(text = cll))
       } else {
-        # Read from the netCDF resource. .NC_map always refers to the initial
-        # dimensions, so the arguments are trimmed to that length (noting that
-        # there may be "scalar" axes in a variable backed by a netCDF resource).
-        len <- length(private$.NC_map$start)
-        start <- private$.NC_map$start + sc$start[1L:len] - 1L
-        private$.NCobj$get_data(start, sc$count[1L:len])
+        # Read from the netCDF resource: translate validated LOCAL start/count
+        # to NC-space via this object's .NC_map offset, then read directly.
+        nc <- private$to_nc_indices(sc$start, sc$count)
+        private$.NCobj$get_data(nc$start, nc$count)
       }
+    },
+
+    #' @description Read the array for `(start, count)`, transparently splitting
+    #'   the request into budget-bounded, chunk-aligned sub-reads when the
+    #'   window is large, and reassembling into one array via indexed
+    #'   assignment. This materializes the full `(start, count)` window: it
+    #'   bounds each individual read, and warns if the reassembled whole exceeds
+    #'   `CF.options$memory_cell_limit`, but does not itself reduce memory below
+    #'   the size of that window. Use this in preference to `read_chunk()` for
+    #'   any read that might be large.
+    #' @param start,count As for `read_chunk()`.
+    #' @return An array, as `read_chunk()` would return.
+    read_window = function(start, count) {
+      sc <- private$check_start_count(start, count)
+      if (!length(sc)) return(NULL)
+      private$read_window_core(sc$start, sc$count, self$read_chunk)
     }
   ),
   active = list(

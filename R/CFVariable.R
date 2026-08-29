@@ -178,6 +178,157 @@ CFVariable <- R6::R6Class("CFVariable",
       list(index = index, X = c(ry[1L], rows), Y = c(rx[1L], cols), aoi = private$.llgrid$aoi, box = dim_index)
     },
 
+    # === Reducer functions === These functions implement base functions sum,
+    # mean, min, max, range over chunks of data such that they can be applied
+    # over variables whose data exceeds available memory. The reducer functions
+    # are used by process_level().
+    .reducer_sum = list(
+      init = function(shape) array(0, dim = shape),
+      update = function(acc, block, tdim, na_rm)
+        acc + .process.data(block, tdim, FUN = sum, na.rm = na_rm)[[1L]],
+      finalize = function(acc, na_rm) list(acc)
+    ),
+
+    .reducer_mean = list(
+      init = function(shape) list(sum = array(0, dim = shape), n = array(0, dim = shape)),
+      update = function(acc, block, tdim, na_rm) {
+        list(sum = acc$sum + .process.data(block, tdim, FUN = sum, na.rm = na_rm)[[1L]],
+             n   = acc$n   + .process.data(block, tdim, FUN = function(x, ...)
+               if (na_rm) sum(!is.na(x)) else length(x))[[1L]])
+      },
+      finalize = function(acc, na_rm) list(acc$sum / acc$n)
+    ),
+
+    # min/max/range: per-block partials come from min()/max() themselves, which
+    # already turn an all-NA block-at-location into Inf/-Inf (with a warning)
+    # under na.rm = TRUE -- that warning is suppressed per block and re-issued
+    # exactly once at finalize(), conditioned on the FINAL accumulator, matching
+    # base R's own single warning for a whole-vector call.
+    .reducer_min = list(
+      init = function(shape) array(Inf, dim = shape),
+      update = function(acc, block, tdim, na_rm)
+        pmin(acc, suppressWarnings(.process.data(block, tdim, FUN = min, na.rm = na_rm)[[1L]]), na.rm = na_rm),
+      finalize = function(acc, na_rm) {
+        if (na_rm && any(is.infinite(acc) & acc > 0))
+          warning("no non-missing arguments to min; returning Inf", call. = FALSE)
+        list(acc)
+      }
+    ),
+
+    .reducer_max = list(
+      init = function(shape) array(-Inf, dim = shape),
+      update = function(acc, block, tdim, na_rm)
+        pmax(acc, suppressWarnings(.process.data(block, tdim, FUN = max, na.rm = na_rm)[[1L]]), na.rm = na_rm),
+      finalize = function(acc, na_rm) {
+        if (na_rm && any(is.infinite(acc) & acc < 0))
+          warning("no non-missing arguments to max; returning -Inf", call. = FALSE)
+        list(acc)
+      }
+    ),
+
+    .reducer_range = list(
+      init = function(shape) list(min = array(Inf, dim = shape), max = array(-Inf, dim = shape)),
+      update = function(acc, block, tdim, na_rm) {
+        list(min = pmin(acc$min, suppressWarnings(.process.data(block, tdim, FUN = min, na.rm = na_rm)[[1L]]), na.rm = na_rm),
+             max = pmax(acc$max, suppressWarnings(.process.data(block, tdim, FUN = max, na.rm = na_rm)[[1L]]), na.rm = na_rm))
+      },
+      finalize = function(acc, na_rm) {
+        if (na_rm) {
+          if (any(is.infinite(acc$min) & acc$min > 0))
+            warning("no non-missing arguments to min; returning Inf", call. = FALSE)
+          if (any(is.infinite(acc$max) & acc$max < 0))
+            warning("no non-missing arguments to max; returning -Inf", call. = FALSE)
+        }
+        list(acc$min, acc$max)  # matches .process.data()'s asplit() order exactly
+      }
+    ),
+
+    # Match by function identity, not name -- a user's own function called
+    # "mean" is never silently intercepted. mean's sum/count decomposition
+    # is only valid for trim = 0 (the default); a trimmed mean isn't
+    # linearly decomposable across blocks, so that case falls through to
+    # the materialized path instead.
+    find_reducer = function(fun, dots) {
+      if (identical(fun, base::sum)) return(private$.reducer_sum)
+      if (identical(fun, base::mean) && (is.null(dots$trim) || dots$trim == 0))
+        return(private$.reducer_mean)
+      if (identical(fun, base::min)) return(private$.reducer_min)
+      if (identical(fun, base::max)) return(private$.reducer_max)
+      if (identical(fun, base::range) && !isTRUE(dots$finite)) return(private$.reducer_range)
+      NULL
+    },
+
+    # Plan blocks for streaming that vary only along a time dimension, at the
+    # full requested extent on every other dimension so every block's
+    # per-location reduction lines up with the same accumulator locations and
+    # can be merged with plain element-wise arithmetic. Deliberately not
+    # .chunk_plan(): that planner is free to also split the other dimensions to
+    # hit budget, which breaks a location-keyed accumulator (blocks would cover
+    # different, non-overlapping spatial regions rather than more time at the
+    # same locations).
+    plan_tdim_only = function(start, count, tdim, tdim_native, itemsize, budget) {
+      other_elems <- prod(as.numeric(count[-tdim]))
+      max_mult <- max(1L, floor(budget / (itemsize * other_elems * tdim_native)))
+      block_tdim <- min(max_mult * tdim_native, count[tdim])
+
+      tstart <- seq(start[tdim], start[tdim] + count[tdim] - 1L, by = block_tdim)
+      lapply(tstart, function(s) {
+        st <- start; st[tdim] <- s
+        ct <- count; ct[tdim] <- min(block_tdim, start[tdim] + count[tdim] - s)
+        list(start = st, count = ct)
+      })
+    },
+
+    # Compute one factor level's contribution from one or more contiguous
+    # tdim runs (already split at disparate-index boundaries by the caller).
+    # Streams via .chunk_plan() when the level exceeds budget and `fun` has
+    # a registered reducer; otherwise materializes and reduces as before.
+    process_level = function(runs, tdim, num_dims, fun, ...) {
+      runs <- lapply(runs, function(r) {
+        sc <- private$check_start_count(r$start, r$count)
+        list(start = sc$start, count = sc$count)
+      })
+
+      itemsize <- .nc_type_size(self$data_type) %||% 8L
+      total_elems <- sum(sapply(runs, function(r) prod(r$count)))
+
+      materialize <- function() {
+        if (length(runs) == 1L)
+          self$read_window(runs[[1L]]$start, runs[[1L]]$count)
+        else
+          abind::abind(lapply(runs, function(r) self$read_window(r$start, r$count)), along = num_dims)
+      }
+
+      limit <- CF.options$memory_cell_limit
+      if (total_elems * itemsize <= limit)
+        return(.process.data(materialize(), tdim, FUN = fun, ...))
+
+      dots <- list(...)
+      reducer <- private$find_reducer(fun, dots)
+      chunks <- if (!is.null(private$.NCobj)) private$.NCobj$netcdf4$chunksizes else NULL
+      tdim_native <- if (!is.null(chunks)) chunks[tdim] else 1L
+      feasible <- !is.null(reducer) && all(sapply(runs, function(r)
+        prod(as.numeric(r$count[-tdim])) * tdim_native * itemsize <= limit))
+      if (feasible) {
+        na_rm <- isTRUE(dots$na.rm)
+        acc <- NULL
+        for (r in runs) {
+          plan <- private$plan_tdim_only(r$start, r$count, tdim, tdim_native, itemsize, limit)
+          for (p in plan) {
+            block <- self$read_chunk(p$start, p$count)
+            if (is.null(acc)) {
+              bd <- dim(block)
+              acc <- reducer$init(if (is.null(bd)) 1L else bd[-tdim])
+            }
+            acc <- reducer$update(acc, block, tdim, na_rm)
+          }
+        }
+        return(reducer$finalize(acc, na_rm))
+      }
+
+      .process.data(materialize(), tdim, FUN = fun, ...)
+    },
+
     # Internal apply/tapply method for this class. If the size of the data
     # variable is below a certain threshold, read the data and process in one
     # go. Otherwise processing goes per factor level. In other words, for each
@@ -187,7 +338,8 @@ CFVariable <- R6::R6Class("CFVariable",
     process_data = function(tdim, fac, fun, ...) {
       if (!is.null(private$.values))
         return(.process.data(self$values, tdim, fac, fun, ...))
-      else if (prod(sapply(private$.axes, function(x) x$length)) < CF.options$memory_cell_limit)
+      itemsize <- .nc_type_size(self$data_type) %||% 8L
+      if (prod(sapply(private$.axes, function(x) x$length)) * itemsize < CF.options$memory_cell_limit)
         # Read the whole data array because size is manageable
         return(.process.data(self$read_data(), tdim, fac, fun, ...))
 
@@ -203,21 +355,20 @@ CFVariable <- R6::R6Class("CFVariable",
       for (l in 1L:lvls) {
         indices <- which(ndx == l)
         dff <- diff(indices)
-        if (all(dff == 1L)) {       # Data is contiguous per factor level
+        if (all(dff == 1L)) {
           rng <- range(indices)
-          start[tdim] <- rng[1L]
-          count[tdim] <- rng[2L] - rng[1L] + 1L
-          values <- self$read_chunk(start, count)
-        } else {                    # Era factors have disparate indices
+          st <- start; st[tdim] <- rng[1L]
+          ct <- count; ct[tdim] <- rng[2L] - rng[1L] + 1L
+          runs <- list(list(start = st, count = ct))
+        } else {
           cutoffs <- c(0L, which(c(dff, 2L) > 1L))
-          values <- lapply(2L:length(cutoffs), function(i) {
-            start[tdim] <- indices[cutoffs[i - 1L] + 1L]
-            count[tdim] <- cutoffs[i] - cutoffs[i - 1L]
-            self$read_chunk(start, count)
+          runs <- lapply(2L:length(cutoffs), function(i) {
+            st <- start; st[tdim] <- indices[cutoffs[i - 1L] + 1L]
+            ct <- count; ct[tdim] <- cutoffs[i] - cutoffs[i - 1L]
+            list(start = st, count = ct)
           })
-          values <- abind::abind(values, along = num_dims)
         }
-        d[[l]] <- .process.data(values, tdim, FUN = fun, ...)
+        d[[l]] <- private$process_level(runs, tdim, num_dims, fun, ...)
         # d is a list with lvls elements, each element a list with elements for
         # the number of function results, possibly 1; each element having an
         # array of dimensions from private$values that are not tdim.
@@ -599,12 +750,10 @@ CFVariable <- R6::R6Class("CFVariable",
       # Get the data for the result CFVariable
       d <- NULL
       if (is.null(aux)) {
-        # Regular axes selected so stay virtual if data has not been loaded yet
         if (!is.null(private$.values))
-          d <- self$read_chunk(start, count)
+          d <- self$read_window(start, count)
       } else {
-        # Auxiliary grids selected, index the data
-        d <- self$read_chunk(start, count)
+        d <- self$read_window(start, count)
 
         lon_idx <- which(sapply(out_axes, inherits, "CFAxisLongitude"))
         lat_idx <- which(sapply(out_axes, inherits, "CFAxisLatitude"))
@@ -640,9 +789,9 @@ CFVariable <- R6::R6Class("CFVariable",
       if (is.null(aux)) {
         v <- if (self$has_resource) {
           NCdims <- length(private$.NC_map$start)
+          nc <- private$to_nc_indices(start[seq_len(NCdims)], count[seq_len(NCdims)])
           CFVariable$new(private$.NCobj, group = grp, values = d, axes = out_axes,
-                         start = start[1:NCdims] + private$.NC_map$start - 1L, count = count[1:NCdims],
-                         attributes = atts)
+                         start = nc$start, count = nc$count, attributes = atts)
         } else
           CFVariable$new(self$name, group = grp, values = d, axes = out_axes, attributes = atts)
         v$crs <- private$.crs
@@ -1555,7 +1704,7 @@ dimnames.CFVariable <- function(x) {
       }
     }
   }
-  data <- x$read_chunk(start, count)
+  data <- x$read_window(start, count)
 
   # Apply dimension data and other attributes
   if (length(x$axes) && length(dim(data)) == length(dnames)) { # dimensions may have been dropped automatically, e.g. NC_CHAR to character string
