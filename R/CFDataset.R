@@ -423,24 +423,20 @@ CFDataset <- R6::R6Class("CFDataset",
     #' @field var_names (read-only) Vector of names of variables in this data set.
     var_names = function(value) {
       if (missing(value)) {
-        nm <- if (self$has_subgroups())
+        if (self$has_subgroups())
           vapply(self$variables(), function(v) v$fullname, character(1L), USE.NAMES = FALSE)
         else
           vapply(self$variables(), function(v) v$name, character(1L), USE.NAMES = FALSE)
-        #names(nm) <- NULL
-        nm
       }
     },
 
     #' @field axis_names (read-only) Vector of names of axes in this data set.
     axis_names = function(value) {
       if (missing(value)) {
-        nm <- if (self$has_subgroups())
-          sapply(self$axes(), function(ax) ax$fullname)
+        if (self$has_subgroups())
+          vapply(self$axes(), function(ax) ax$fullname, character(1L), USE.NAMES = FALSE)
         else
-          sapply(self$axes(), function(ax) ax$name)
-        names(nm) <- NULL
-        nm
+          vapply(self$axes(), function(ax) ax$name, character(1L), USE.NAMES = FALSE)
       }
     }
   )
