@@ -95,8 +95,9 @@ CFAxisLatitude <- R6::R6Class("CFAxisLatitude",
       else {
         rng <- range(rng)
         if (self$has_resource) {
-          ax <- CFAxisLatitude$new(private$.NCobj, group = group, start = private$.NC_map$start + rng[1L] - 1L,
-                                   count = rng[2L] - rng[1L] + 1L, attributes = self$attributes)
+          nc <- private$to_nc_indices(rng[1L], rng[2L] - rng[1L] + 1L)
+          ax <- CFAxisLatitude$new(private$.NCobj, group = group, start = nc$start,
+                                   count = nc$count, attributes = self$attributes)
           if (nzchar(name))
             ax$name <- name
         } else {

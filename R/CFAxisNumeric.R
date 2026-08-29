@@ -285,8 +285,9 @@ CFAxisNumeric <- R6::R6Class("CFAxisNumeric",
       else {
         rng <- range(rng)
         if (self$has_resource) {
-          ax <- CFAxisNumeric$new(private$.NCobj, group = group, start = private$.NC_map$start + rng[1L] -1L,
-                                  count = rng[2L] - rng[1L] + 1L, orientation = private$.orient,
+          nc <- private$to_nc_indices(rng[1L], rng[2L] - rng[1L] + 1L)
+          ax <- CFAxisNumeric$new(private$.NCobj, group = group, start = nc$start,
+                                  count = nc$count, orientation = private$.orient,
                                   attributes = self$attributes)
           if (nzchar(name))
             ax$name <- name

@@ -27,6 +27,104 @@ netcdf_data_types <- c("NC_BYTE", "NC_UBYTE", "NC_CHAR", "NC_SHORT",
          "NC_NAT")
 }
 
+# Approximate byte size of a single element of the given netCDF data type.
+# Returns NA for an unrecognized type (the caller should then skip any
+# byte-based guard rather than block on an unknown quantity).
+.nc_type_size <- function(nc_type) {
+  switch(nc_type,
+         NC_BYTE = , NC_UBYTE = , NC_CHAR = 1L,
+         NC_SHORT = , NC_USHORT = 2L,
+         NC_INT = , NC_UINT = , NC_FLOAT = 4L,
+         NC_INT64 = , NC_UINT64 = , NC_DOUBLE = 8L,
+         NC_STRING = 8L,  # a floor: actual size is per-string and unknowable in advance
+         NA_integer_)
+}
+
+# Human-readable byte count for warning messages.
+.format_bytes <- function(bytes) {
+  units <- c("B", "KB", "MB", "GB", "TB")
+  e <- min(length(units) - 1L, max(0L, floor(log(max(bytes, 1), 1024))))
+  sprintf("%.1f %s", bytes / 1024^e, units[e + 1L])
+}
+
+# Plan a sequence of (start, count) sub-reads tiling the requested window,
+# each within budget_bytes, aligned to the native chunk grid where that
+# alignment is actually meaningful.
+#
+# shape, chunk_shape: integer vectors, same order as start/count.
+#   chunk_shape may be NULL for contiguous storage.
+# start, count: the requested window.
+# itemsize: bytes per element.
+# budget_bytes: cap on any single returned block, in bytes.
+#
+# Returns a list of `list(start = ..., count = ...)`.
+.chunk_plan <- function(shape, chunk_shape, start, count, itemsize, budget_bytes) {
+  if (itemsize > budget_bytes)
+    stop("Argument `budget_bytes` is smaller than a single element; cannot plan a read", call. = FALSE)
+
+  nd <- length(shape)
+  if (is.null(chunk_shape)) {
+    chunk_shape <- count
+    chunk_shape[1L] <- 1L  # contiguous storage: slab along the first dimension
+  }
+  chunk_shape <- as.integer(pmin(chunk_shape, shape))
+
+  last_idx     <- start + count - 1L
+  first_native <- (start - 1L) %/% chunk_shape
+  last_native  <- (last_idx - 1L) %/% chunk_shape
+  n_native     <- last_native - first_native + 1L
+  native_bytes <- prod(as.numeric(chunk_shape)) * itemsize
+
+  if (native_bytes <= budget_bytes) {
+    # One native chunk fits: try to GROUP several whole native chunks into
+    # one request, up to budget, growing whichever dimension has the most
+    # native chunks left to absorb.
+    group <- rep(1L, nd)
+    repeat {
+      grown <- FALSE
+      for (d in order(-(n_native / group))) {
+        if (group[d] >= n_native[d]) next
+        trial <- group; trial[d] <- group[d] + 1L
+        extent <- pmin(trial * chunk_shape, count)
+        if (prod(as.numeric(extent)) * itemsize > budget_bytes) next
+        group <- trial; grown <- TRUE
+        break
+      }
+      if (!grown) break
+    }
+    tile        <- pmin(group * chunk_shape, count)
+    grid_origin <- first_native * chunk_shape + 1L
+  } else {
+    # A single native chunk already exceeds budget: SHRINK below it, reducing
+    # the largest dimension(s) first. Every request that touches a given native
+    # chunk under this regime causes that chunk to be decompressed again
+    # internally -- unavoidable once the chunk itself doesn't fit the budget,
+    # not a defect of the tiling. This finds a tile that fits, via simple
+    # halving; not necessarily the largest one that would still fit.
+    tile <- chunk_shape
+    ord  <- order(-chunk_shape)
+    i <- 1L
+    while (prod(as.numeric(tile)) * itemsize > budget_bytes && i <= nd) {
+      d <- ord[i]
+      while (tile[d] > 1L && prod(as.numeric(tile)) * itemsize > budget_bytes)
+        tile[d] <- max(1L, tile[d] %/% 2L)
+      i <- i + 1L
+    }
+    tile        <- pmin(tile, count)
+    grid_origin <- start  # no alignment benefit within a single native chunk
+  }
+
+  seqs   <- lapply(seq_len(nd), function(d) seq(grid_origin[d], last_idx[d], by = tile[d]))
+  combos <- expand.grid(seqs, KEEP.OUT.ATTRS = FALSE)
+
+  lapply(seq_len(nrow(combos)), function(i) {
+    s_grid <- as.integer(combos[i, ])
+    e      <- pmin(s_grid + tile - 1L, last_idx)
+    s      <- pmax(s_grid, start)
+    list(start = s, count = as.integer(e - s + 1L))
+  })
+}
+
 # This function is a bare-bones implementation of `apply(X, MARGIN, tapply, INDEX, FUN, ...)`,
 # i.e. apply a factor over a dimension of an array. There are several restrictions
 # compared to the base::apply/tapply pair (but note that function arguments are

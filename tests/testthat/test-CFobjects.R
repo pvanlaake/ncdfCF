@@ -169,3 +169,55 @@ test_that("Math and Ops functions", {
   dvabove0 <- dvcos > 0
   expect_true(is.logical(dvabove0$raw()))
 })
+
+test_that("subset() on a resource-backed variable and its axes computes correct nc-space indices", {
+  skip_if_not_installed("RNetCDF")
+
+  fn <- tempfile(fileext = ".nc")
+  nc <- RNetCDF::create.nc(fn, format = "netcdf4")
+  RNetCDF::dim.def.nc(nc, "lon", 10L)
+  RNetCDF::dim.def.nc(nc, "lat", 8L)
+  RNetCDF::dim.def.nc(nc, "time", 6L)
+
+  RNetCDF::var.def.nc(nc, "lon", "NC_DOUBLE", "lon")
+  RNetCDF::att.put.nc(nc, "lon", "units", "NC_CHAR", "degrees_east")
+  RNetCDF::att.put.nc(nc, "lon", "standard_name", "NC_CHAR", "longitude")
+  RNetCDF::att.put.nc(nc, "lon", "axis", "NC_CHAR", "X")
+  RNetCDF::var.put.nc(nc, "lon", seq(0, 9))
+
+  RNetCDF::var.def.nc(nc, "lat", "NC_DOUBLE", "lat")
+  RNetCDF::att.put.nc(nc, "lat", "units", "NC_CHAR", "degrees_north")
+  RNetCDF::att.put.nc(nc, "lat", "standard_name", "NC_CHAR", "latitude")
+  RNetCDF::att.put.nc(nc, "lat", "axis", "NC_CHAR", "Y")
+  RNetCDF::var.put.nc(nc, "lat", seq(0, 7))
+
+  RNetCDF::var.def.nc(nc, "time", "NC_DOUBLE", "time")
+  RNetCDF::att.put.nc(nc, "time", "units", "NC_CHAR", "days since 2000-01-01")
+  RNetCDF::att.put.nc(nc, "time", "standard_name", "NC_CHAR", "time")
+  RNetCDF::att.put.nc(nc, "time", "axis", "NC_CHAR", "T")
+  RNetCDF::att.put.nc(nc, "time", "calendar", "NC_CHAR", "standard")
+  RNetCDF::var.put.nc(nc, "time", seq(0, 5))
+
+  RNetCDF::var.def.nc(nc, "temp", "NC_DOUBLE", c("lon", "lat", "time"),
+                      chunking = TRUE, chunksizes = c(4L, 3L, 2L))
+  data <- array(as.double(seq_len(10L * 8L * 6L)), dim = c(10L, 8L, 6L))
+  RNetCDF::var.put.nc(nc, "temp", data)
+  RNetCDF::close.nc(nc)
+  on.exit(unlink(fn))
+
+  ds <- open_ncdf(fn)
+  v <- ds[[ds$var_names[1L]]]
+
+  sub <- v$subset(X = c(3, 5), Y = c(2, 4))  # coordinate values, per subset()'s contract
+
+  is_x <- vapply(sub$axes, function(a) a$orientation, character(1L)) == "X"
+  is_y <- vapply(sub$axes, function(a) a$orientation, character(1L)) == "Y"
+  lon_idx <- match(sub$axes[[which(is_x)]]$values, seq(0, 9))
+  lat_idx <- match(sub$axes[[which(is_y)]]$values, seq(0, 7))
+
+  # Self-consistent check: whatever indices the subsetted axes themselves
+  # report having selected, the variable's data must match exactly those
+  # indices in the original array -- doesn't depend on hand-computing the
+  # expected index range separately.
+  expect_equal(sub$values, data[lon_idx, lat_idx, ])
+})

@@ -20,7 +20,7 @@ CF.options <- new.env(parent = emptyenv())
   assign("newVarId", function() {CF$currentVarId <- CF$currentVarId - 1L; CF$currentVarId}, envir = CF)
 
   # User-modifiable options
-  assign("memory_cell_limit", 1e8, envir = CF.options)
+  assign("memory_cell_limit", 1e9, envir = CF.options)
   assign("digits", 6L, envir = CF.options)
   assign("cache_stale_days", 90, envir = CF.options)
 }

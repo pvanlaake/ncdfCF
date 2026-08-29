@@ -379,9 +379,9 @@ CFAxisTime <- R6::R6Class("CFAxisTime",
       else {
         rng <- as.integer(range(rng))
         if (self$has_resource) {
+          nc <- private$to_nc_indices(rng[1L], rng[2L] - rng[1L] + 1L)
           ax <- CFAxisTime$new(private$.NCobj, group = group, values = self$values[rng[1L]:rng[2L]],
-                               start = private$.NC_map$start + rng[1L] - 1L,
-                               count = rng[2L] - rng[1L] + 1L, attributes = self$attributes)
+                               start = nc$start, count = nc$count, attributes = self$attributes)
           if (nzchar(name))
             ax$name <- name
         } else {
