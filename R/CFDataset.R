@@ -424,10 +424,10 @@ CFDataset <- R6::R6Class("CFDataset",
     var_names = function(value) {
       if (missing(value)) {
         nm <- if (self$has_subgroups())
-          sapply(self$variables(), function(v) v$fullname)
+          vapply(self$variables(), function(v) v$fullname, character(1L), USE.NAMES = FALSE)
         else
-          sapply(self$variables(), function(v) v$name)
-        names(nm) <- NULL
+          vapply(self$variables(), function(v) v$name, character(1L), USE.NAMES = FALSE)
+        #names(nm) <- NULL
         nm
       }
     },
