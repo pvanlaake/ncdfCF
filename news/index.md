@@ -4,7 +4,8 @@
 
 ##### API
 
-- `CFData$read_data()` and `$read_chunk()` have been made public.
+- `CFData$read_data()` and `$read_chunk()` have been made public. New
+  `$read_window()` method.
 - Added
   [`makeGroup()`](https://r-cf.github.io/ncdfCF/reference/makeGroup.md)
   function.
@@ -16,6 +17,14 @@
 
 ##### Code
 
+- Code has been added to process data in chunks if a data request is too
+  large for the available memory (as set by
+  `CF.options$memory_cell_limit`). If the data is chunked, as may be the
+  case with netCDF-4 data files, the processing will use chunks to
+  minimize overhead (reading, decompressing) at the storage layer
+  (HDF-5). Memory may still be exhausted if the caller requests too much
+  data in one call but the internal processing functions (like
+  `CFVariable$summarise()`) are now protected.
 - `CFAxisTime$append()` uses `CFtime` code for merging `CFTime`
   instances, allowing for instances with distinct but compatible
   definition to be merged.
@@ -29,6 +38,8 @@
 - Fixed indexing of numeric axis with one-sided boundary values.
 - Suggests packages `zarr` and `geozarr`.
 - Bumped R version to 4.2.
+- Multiple minor fixes.
+- Documentation update.
 
 ## ncdfCF 0.8.2
 

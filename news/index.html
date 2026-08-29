@@ -44,7 +44,7 @@
 <div class="section level5">
 <h5 id="api-development-version">API<a class="anchor" aria-label="anchor" href="#api-development-version"></a></h5>
 <ul><li>
-<code>CFData$read_data()</code> and <code>$read_chunk()</code> have been made public.</li>
+<code>CFData$read_data()</code> and <code>$read_chunk()</code> have been made public. New <code>$read_window()</code> method.</li>
 <li>Added <code><a href="../reference/makeGroup.html">makeGroup()</a></code> function.</li>
 <li>
 <code>CFAxis$identical()</code> can optionally assess attributes for equality.</li>
@@ -54,7 +54,8 @@
 </ul></div>
 <div class="section level5">
 <h5 id="code-development-version">Code<a class="anchor" aria-label="anchor" href="#code-development-version"></a></h5>
-<ul><li>
+<ul><li>Code has been added to process data in chunks if a data request is too large for the available memory (as set by <code>CF.options$memory_cell_limit</code>). If the data is chunked, as may be the case with netCDF-4 data files, the processing will use chunks to minimize overhead (reading, decompressing) at the storage layer (HDF-5). Memory may still be exhausted if the caller requests too much data in one call but the internal processing functions (like <code>CFVariable$summarise()</code>) are now protected.</li>
+<li>
 <code>CFAxisTime$append()</code> uses <code>CFtime</code> code for merging <code>CFTime</code> instances, allowing for instances with distinct but compatible definition to be merged.</li>
 <li>Cross-referencing NC objects now uses the dimid for more robust code.</li>
 <li>More consistent use of FQNs for dimensions, variables and axes.</li>
@@ -64,6 +65,8 @@
 <li>Fixed indexing of numeric axis with one-sided boundary values.</li>
 <li>Suggests packages <code>zarr</code> and <code>geozarr</code>.</li>
 <li>Bumped R version to 4.2.</li>
+<li>Multiple minor fixes.</li>
+<li>Documentation update.</li>
 </ul></div>
 </div>
     <div class="section level2">
